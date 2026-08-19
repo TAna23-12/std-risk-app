@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
   Activity, Calendar, MapPin, Pill, 
-  ShieldCheck, LogIn, LogOut, User as UserIcon 
+  ShieldCheck, LogIn, LogOut, User as UserIcon, History 
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -39,12 +39,22 @@ export default function Navbar() {
     router.push('/');
   };
 
-  const navLinks = [
+  // เมนูมาตรฐานสำหรับทุกคน
+  const baseLinks = [
     { href: '/assessment', label: 'ประเมินความเสี่ยง', icon: Activity },
     { href: '/timeline', label: 'ปฏิทินนัดตรวจ', icon: Calendar },
     { href: '/clinics', label: 'ค้นหาคลินิก', icon: MapPin },
+  ];
+
+  // เมนูเพิ่มเติมสำหรับคนที่ล็อกอินแล้ว
+  const userOnlyLinks = [
+    { href: '/history', label: 'ประวัติประเมิน', icon: History },
     { href: '/tracker', label: 'บันทึกยา', icon: Pill },
   ];
+
+  const visibleLinks = currentUser 
+    ? [...baseLinks, ...userOnlyLinks] 
+    : [...baseLinks, { href: '/tracker', label: 'บันทึกยา', icon: Pill }];
 
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
@@ -63,7 +73,7 @@ export default function Navbar() {
         {/* เมนูหลัก & ปุ่ม Auth */}
         <div className="flex items-center gap-1 sm:gap-2">
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => {
+            {visibleLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
               return (
@@ -89,8 +99,9 @@ export default function Navbar() {
           {currentUser ? (
             <div className="flex items-center gap-2">
               <Link
-                href="/tracker"
-                className="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-slate-200 transition"
+                href="/history"
+                title="คลิกเพื่อดูประวัติการประเมินของคุณ"
+                className="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition cursor-pointer"
               >
                 <UserIcon className="w-3.5 h-3.5 text-indigo-600" />
                 <span className="max-w-[120px] truncate">{currentUser.email}</span>
