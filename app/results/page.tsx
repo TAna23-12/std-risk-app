@@ -8,11 +8,9 @@ import { calculateSTDRisk } from '@/lib/risk-calculator';
 import PanicButton from '@/components/panic-button';
 import { 
   ShieldAlert, ArrowRight, MapPin, RefreshCw, 
-  FileText, CheckCircle2, X, Printer, SlidersHorizontal, Mail
+  FileText, CheckCircle2, X, Printer, SlidersHorizontal, Mail,
+  HeartPulse, Calendar, Pill
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip
-} from 'recharts';
 
 // ฟังก์ชันแปลงวันที่และเวลาแบบไทยทางการ (GMT+7)
 const formatThaiDateTime = (dateObj: Date = new Date()) => {
@@ -140,13 +138,6 @@ export default function ResultsPage() {
     );
   }
 
-  const chartData = [
-    { name: 'HIV', score: result.hiv.score, simScore: simulatedResult.hiv.score },
-    { name: 'ซิฟิลิส', score: result.syphilis.score, simScore: simulatedResult.syphilis.score },
-    { name: 'หนองใน', score: result.gonorrhea.score, simScore: simulatedResult.gonorrhea.score },
-    { name: 'ตับอักเสบบี', score: result.hepatitisB.score, simScore: simulatedResult.hepatitisB.score },
-  ];
-
   const hoursSince = userInput.daysSinceExposure * 24;
   const pepHoursRemaining = Math.max(0, 72 - hoursSince);
 
@@ -158,6 +149,54 @@ export default function ResultsPage() {
     }
     return 'แนะนำตรวจคัดกรองตามระยะเวลาที่เหมาะสม';
   };
+
+  const getBadgeStyle = (level: string) => {
+    switch (level) {
+      case 'CRITICAL': return { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700', label: 'วิกฤต (CRITICAL)' };
+      case 'HIGH': return { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', label: 'ความเสี่ยงสูง (HIGH)' };
+      case 'MEDIUM': return { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', label: 'ความเสี่ยงปานกลาง (MEDIUM)' };
+      default: return { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', label: 'ความเสี่ยงต่ำ (LOW)' };
+    }
+  };
+
+  const getBarColor = (score: number) => {
+    if (score >= 60) return 'bg-rose-600';
+    if (score >= 30) return 'bg-amber-500';
+    return 'bg-indigo-600';
+  };
+
+  const badge = getBadgeStyle(result.overallLevel);
+
+  const diseaseList = [
+    { 
+      name: 'เชื้อไวรัสเอชไอวี (HIV-1 / HIV-2)', 
+      code: 'HIV', 
+      score: result.hiv?.score ?? 0, 
+      simScore: simulatedResult.hiv?.score ?? 0,
+      obj: result.hiv 
+    },
+    { 
+      name: 'โรคซิฟิลิส (Treponema pallidum)', 
+      code: 'Syphilis', 
+      score: result.syphilis?.score ?? 0, 
+      simScore: simulatedResult.syphilis?.score ?? 0,
+      obj: result.syphilis 
+    },
+    { 
+      name: 'หนองในแท้และหนองในเทียม (Gonorrhea / Chlamydia)', 
+      code: 'Gonorrhea', 
+      score: result.gonorrhea?.score ?? 0, 
+      simScore: simulatedResult.gonorrhea?.score ?? 0,
+      obj: result.gonorrhea 
+    },
+    { 
+      name: 'ไวรัสตับอักเสบบี (Hepatitis B - HBsAg)', 
+      code: 'Hepatitis B', 
+      score: result.hepatitisB?.score ?? 0, 
+      simScore: simulatedResult.hepatitisB?.score ?? 0,
+      obj: result.hepatitisB 
+    },
+  ];
 
   const handleEmailSelf = () => {
     const subject = encodeURIComponent('[STD RiskGuard] บันทึกผลสรุปประวัติความเสี่ยงเพื่อยื่นตรวจ');
@@ -232,24 +271,12 @@ export default function ResultsPage() {
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
             <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                ผลการวิเคราะห์ระดับคลินิก (Clinical Evaluation)
-              </span>
+              <div className="flex items-center gap-2 text-xs font-extrabold text-indigo-600 uppercase tracking-wider">
+                <HeartPulse className="w-4 h-4" />
+                <span>ผลการวิเคราะห์ระดับคลินิก (Clinical Evaluation)</span>
+              </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-                ระดับความเสี่ยงโดยรวม:{' '}
-                <span
-                  className={
-                    result.overallLevel === 'CRITICAL'
-                      ? 'text-rose-600'
-                      : result.overallLevel === 'HIGH'
-                      ? 'text-amber-600'
-                      : result.overallLevel === 'MEDIUM'
-                      ? 'text-yellow-600'
-                      : 'text-emerald-600'
-                  }
-                >
-                  {result.overallLevel}
-                </span>
+                ระดับความเสี่ยงโดยรวม: <span className={badge.text}>{result.overallLevel}</span>
               </h1>
             </div>
 
@@ -261,40 +288,58 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          {/* Bar Chart Section */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
+          {/* Unified Horizontal Risk Bars Section */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 คะแนนความเสี่ยงจำแนกรายโรค (Risk Score 0 - 100)
               </h2>
               <div className="flex items-center gap-4 text-xs font-semibold">
                 <span className="flex items-center gap-1.5 text-slate-700">
-                  <span className="w-3 h-3 rounded-sm bg-indigo-600 inline-block" /> ความเสี่ยงจริงของคุณ
+                  <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block" /> ความเสี่ยงจริงของคุณ
                 </span>
-                <span className="flex items-center gap-1.5 text-emerald-600">
-                  <span className="w-3 h-3 rounded-sm bg-emerald-500 inline-block" /> เมื่อมีมาตรการป้องกัน
-                </span>
+                {(simCondom || simPrep) && (
+                  <span className="flex items-center gap-1.5 text-emerald-600">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" /> เมื่อมีมาตรการป้องกัน
+                  </span>
+                )}
               </div>
             </div>
 
-            <div className="h-60 w-full pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 600, fill: '#64748b' }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      borderRadius: '12px',
-                      color: '#fff',
-                      fontSize: '12px',
-                      border: 'none',
-                    }}
-                  />
-                  <Bar dataKey="score" name="ความเสี่ยงจริง" fill="#6366f1" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="simScore" name="ผลจำลองป้องกัน" fill="#10b981" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            {/* 4 Disease Horizontal Progress Bars */}
+            <div className="space-y-3.5 pt-1">
+              {diseaseList.map((d) => {
+                const isSimulated = simCondom || simPrep;
+                const displayScore = isSimulated ? d.simScore : d.score;
+                return (
+                  <div key={d.code} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                    <div className="flex justify-between items-center text-xs sm:text-sm font-bold">
+                      <span className="text-slate-800">{d.name}</span>
+                      <div className="flex items-center gap-2">
+                        {isSimulated && d.simScore !== d.score && (
+                          <span className="text-xs text-slate-400 line-through">
+                            {d.score}%
+                          </span>
+                        )}
+                        <span className={`font-black ${isSimulated ? 'text-emerald-600' : 'text-slate-900'}`}>
+                          {displayScore}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden">
+                      <div
+                        className={`${isSimulated ? 'bg-emerald-500' : getBarColor(displayScore)} h-full rounded-full transition-all duration-500`}
+                        style={{ width: `${Math.min(displayScore, 100)}%` }}
+                      />
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 leading-relaxed pt-1">
+                      {getRecText(d.obj)}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -307,7 +352,7 @@ export default function ResultsPage() {
               </h3>
             </div>
             <p className="text-xs text-indigo-900/80 leading-relaxed">
-              ลองเปิด-ปิดตัวเลือกด้านล่าง เพื่อดูว่าการใช้ถุงยางหรือการทานยา PrEP ส่งผลให้กราฟความเสี่ยงลดลงอย่างไร
+              ลองเปิด-ปิดตัวเลือกด้านล่าง เพื่อดูว่าการใช้ถุงยางหรือการทานยา PrEP ส่งผลให้ระดับความเสี่ยงของแต่ละโรคลดลงอย่างไร
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -338,61 +383,18 @@ export default function ResultsPage() {
               </button>
             </div>
           </div>
-
-          {/* Detailed Diagnosis Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-sm text-slate-900">เชื้อ HIV</span>
-                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-white border text-slate-700">
-                  {result.hiv.level} ({result.hiv.score}%)
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">{getRecText(result.hiv)}</p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-sm text-slate-900">ซิฟิลิส (Syphilis)</span>
-                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-white border text-slate-700">
-                  {result.syphilis.level} ({result.syphilis.score}%)
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">{getRecText(result.syphilis)}</p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-sm text-slate-900">หนองใน (Gonorrhea/Chlamydia)</span>
-                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-white border text-slate-700">
-                  {result.gonorrhea.level} ({result.gonorrhea.score}%)
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">{getRecText(result.gonorrhea)}</p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-sm text-slate-900">ไวรัสตับอักเสบบี (Hepatitis B)</span>
-                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-white border text-slate-700">
-                  {result.hepatitisB.level} ({result.hepatitisB.score}%)
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">{getRecText(result.hepatitisB)}</p>
-            </div>
-          </div>
         </div>
 
         {/* Links to Other Modules */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link
             href="/timeline"
             className="p-5 bg-white border border-slate-200 hover:border-indigo-400 rounded-3xl shadow-sm flex items-center justify-between group transition"
           >
             <div className="space-y-1">
               <span className="text-xs font-bold text-indigo-600">สเต็ปถัดไป</span>
-              <p className="font-bold text-sm text-slate-900">ดูปฏิทินนัดตรวจ Window Period</p>
-              <p className="text-xs text-slate-400">วางแผนวันตรวจที่แม่นยำที่สุด</p>
+              <p className="font-bold text-sm text-slate-900">ปฏิทินนัดตรวจ</p>
+              <p className="text-xs text-slate-400">วางแผนวันตรวจ Window Period</p>
             </div>
             <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition" />
           </Link>
@@ -403,8 +405,20 @@ export default function ResultsPage() {
           >
             <div className="space-y-1">
               <span className="text-xs font-bold text-indigo-600">ค้นหาพิกัด</span>
-              <p className="font-bold text-sm text-slate-900">คลินิกนิรนาม 77 จังหวัด</p>
-              <p className="text-xs text-slate-400">ค้นหาสถานพยาบาลใกล้คุณที่สุด</p>
+              <p className="font-bold text-sm text-slate-900">ค้นหาคลินิกนิรนาม</p>
+              <p className="text-xs text-slate-400">สถานพยาบาลใกล้คุณที่สุด</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition" />
+          </Link>
+
+          <Link
+            href="/tracker"
+            className="p-5 bg-white border border-slate-200 hover:border-indigo-400 rounded-3xl shadow-sm flex items-center justify-between group transition"
+          >
+            <div className="space-y-1">
+              <span className="text-xs font-bold text-indigo-600">การป้องกัน</span>
+              <p className="font-bold text-sm text-slate-900">บันทึกยา PrEP / PEP</p>
+              <p className="text-xs text-slate-400">ติดตามและเตือนเวลาทานยา</p>
             </div>
             <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition" />
           </Link>

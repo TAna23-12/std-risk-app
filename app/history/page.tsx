@@ -82,6 +82,12 @@ export default function HistoryPage() {
     }
   };
 
+  const getBarColor = (score: number) => {
+    if (score >= 60) return 'bg-rose-600';
+    if (score >= 30) return 'bg-amber-500';
+    return 'bg-indigo-600';
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4 pb-24">
       <PanicButton />
@@ -169,56 +175,64 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {/* State: แสดงรายการประวัติ */}
+        {/* State: แสดงรายการประวัติ พร้อม Horizontal Bars */}
         {!loading && user && logs.length > 0 && (
           <div className="space-y-4">
-            {logs.map((item) => (
-              <div
-                key={item.log_id}
-                className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                    <Calendar className="w-4 h-4 text-indigo-500" />
-                    <span>วันที่ประเมิน: {formatThaiDate(item.created_at)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {item.is_emergency_pep && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-600 text-white">
-                        เกณฑ์รับยา PEP
+            {logs.map((item) => {
+              const diseases = [
+                { label: 'HIV', score: item.hiv_score },
+                { label: 'ซิฟิลิส', score: item.syphilis_score },
+                { label: 'หนองใน', score: item.gonorrhea_score },
+                { label: 'ตับอักเสบบี', score: item.hepatitis_b_score },
+              ];
+
+              return (
+                <div
+                  key={item.log_id}
+                  className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                      <Calendar className="w-4 h-4 text-indigo-500" />
+                      <span>วันที่ประเมิน: {formatThaiDate(item.created_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.is_emergency_pep && (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-600 text-white">
+                          เกณฑ์รับยา PEP
+                        </span>
+                      )}
+                      <span className={`px-3 py-1 rounded-full text-xs font-extrabold border ${getBadgeColor(item.overall_level)}`}>
+                        ระดับ: {item.overall_level}
                       </span>
-                    )}
-                    <span className={`px-3 py-1 rounded-full text-xs font-extrabold border ${getBadgeColor(item.overall_level)}`}>
-                      ระดับ: {item.overall_level}
-                    </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center">
-                    <span className="text-[11px] font-semibold text-slate-500">HIV</span>
-                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">{item.hiv_score}%</p>
+                  {/* 4 Disease Progress Bars (Unified Design) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                    {diseases.map((d) => (
+                      <div key={d.label} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-slate-600">{d.label}</span>
+                          <span className="font-extrabold text-slate-900">{d.score}%</span>
+                        </div>
+                        <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className={`${getBarColor(d.score)} h-full rounded-full transition-all duration-500`}
+                            style={{ width: `${Math.min(d.score, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center">
-                    <span className="text-[11px] font-semibold text-slate-500">ซิฟิลิส</span>
-                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">{item.syphilis_score}%</p>
-                  </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center">
-                    <span className="text-[11px] font-semibold text-slate-500">หนองใน</span>
-                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">{item.gonorrhea_score}%</p>
-                  </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center">
-                    <span className="text-[11px] font-semibold text-slate-500">ตับอักเสบบี</span>
-                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">{item.hepatitis_b_score}%</p>
-                  </div>
-                </div>
 
-                <div className="text-xs text-slate-500 flex flex-col sm:flex-row sm:justify-between gap-1 pt-1">
-                  <span>ระยะเวลาที่ระบุ ณ วันตรวจ: <strong>{item.days_since_exposure} วัน</strong></span>
-                  <span>อาการที่ระบุ: <strong>{item.symptoms && item.symptoms.length > 0 ? `${item.symptoms.length} รายการ` : 'ไม่มีอาการ'}</strong></span>
+                  <div className="text-xs text-slate-500 flex flex-col sm:flex-row sm:justify-between gap-1 pt-1 border-t border-slate-50">
+                    <span>ระยะเวลาที่ระบุ ณ วันตรวจ: <strong>{item.days_since_exposure} วัน</strong></span>
+                    <span>อาการที่ระบุ: <strong>{item.symptoms && item.symptoms.length > 0 ? `${item.symptoms.length} รายการ` : 'ไม่มีอาการ'}</strong></span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
