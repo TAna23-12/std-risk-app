@@ -8,7 +8,7 @@ import PanicButton from '@/components/panic-button';
 import { 
   ArrowLeft, CheckCircle2, Pill, Clock, AlertTriangle, 
   PlusCircle, XCircle, ShieldAlert, Sparkles, Calendar as CalendarIcon, 
-  RefreshCw, LogOut, User as UserIcon, LogIn
+  RefreshCw, LogIn, ShieldCheck, Lock
 } from 'lucide-react';
 
 interface MedicationLog {
@@ -46,14 +46,13 @@ export default function TrackerPage() {
   const [guideMedType, setGuideMedType] = useState<'PREP_DAILY' | 'PEP'>('PREP_DAILY');
   const [hoursLate, setHoursLate] = useState<number>(4);
 
-  // 1. ฟังก์ชันโหลดข้อมูล (แยกตามสถานะล็อกอิน: ล็อกอินดึง Supabase / Guest ดึง localStorage)
+  // ตรวจสอบสิทธิ์ผู้ใช้และดึงข้อมูลจาก Supabase
   async function checkUserAndFetchLogs() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     setCurrentUser(user);
 
     if (user) {
-      // ผู้ใช้ล็อกอิน: ดึงจาก Supabase
       const { data, error } = await supabase
         .from('medication_logs')
         .select('*')
@@ -63,74 +62,50 @@ export default function TrackerPage() {
       if (!error && data) {
         setLogs(data as MedicationLog[]);
       }
-    } else {
-      // ผู้ใช้นิรนาม (ไม่ได้ล็อกอิน): ดึงจาก localStorage เครื่องตัวเองเท่านั้น
-      const localData = localStorage.getItem('guest_medication_logs');
-      if (localData) {
-        try {
-          setLogs(JSON.parse(localData));
-        } catch {
-          setLogs([]);
-        }
-      } else {
-        setLogs([]);
-      }
     }
     setLoading(false);
   }
 
   useEffect(() => {
     checkUserAndFetchLogs();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      if (session?.user) {
+        checkUserAndFetchLogs();
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setCurrentUser(null);
-    setLogs([]);
-    router.push('/auth');
-  };
-
-  // 2. ฟังก์ชันบันทึกยา (แยกตามสถานะล็อกอิน: ล็อกอินส่ง Cloud / Guest เก็บ localStorage)
+  // ฟังก์ชันบันทึกยาลง Supabase Cloud
   const handleLogDose = async (status: 'TAKEN' | 'MISSED') => {
+    if (!currentUser) return;
     setIsSubmitting(true);
     try {
       const targetDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
 
-      if (currentUser) {
-        // โหมดผู้ใช้ล็อกอิน: ส่งขึ้น Cloud Supabase
-        const newRecord = {
-          user_id: currentUser.id,
-          medication_type: selectedMed,
-          scheduled_time: targetDateTime.toISOString(),
-          taken_at: status === 'TAKEN' ? targetDateTime.toISOString() : null,
-          status: status,
-        };
+      const newRecord = {
+        user_id: currentUser.id,
+        medication_type: selectedMed,
+        scheduled_time: targetDateTime.toISOString(),
+        taken_at: status === 'TAKEN' ? targetDateTime.toISOString() : null,
+        status: status,
+      };
 
-        const { data, error } = await supabase
-          .from('medication_logs')
-          .insert([newRecord])
-          .select();
+      const { data, error } = await supabase
+        .from('medication_logs')
+        .insert([newRecord])
+        .select();
 
-        if (error) {
-          alert('เกิดข้อผิดพลาด: ' + error.message);
-        } else if (data && data.length > 0) {
-          setLogs([data[0] as MedicationLog, ...logs]);
-          alert(status === 'TAKEN' ? 'บันทึกว่าทานยาเรียบร้อยแล้ว' : 'บันทึกสถานะข้ามมื้อเรียบร้อย');
-        }
-      } else {
-        // โหมดนิรนาม (Guest): บันทึกเฉพาะใน Browser localStorage
-        const guestRecord: MedicationLog = {
-          log_id: `guest_${Date.now()}`,
-          medication_type: selectedMed,
-          scheduled_time: targetDateTime.toISOString(),
-          taken_at: status === 'TAKEN' ? targetDateTime.toISOString() : null,
-          status: status,
-        };
-
-        const updatedLogs = [guestRecord, ...logs];
-        setLogs(updatedLogs);
-        localStorage.setItem('guest_medication_logs', JSON.stringify(updatedLogs));
-        alert(status === 'TAKEN' ? 'บันทึกว่าทานยาเรียบร้อยแล้ว (โหมดเครื่องส่วนตัว)' : 'บันทึกสถานะข้ามมื้อเรียบร้อย');
+      if (error) {
+        alert('เกิดข้อผิดพลาด: ' + error.message);
+      } else if (data && data.length > 0) {
+        setLogs([data[0] as MedicationLog, ...logs]);
+        alert(status === 'TAKEN' ? 'บันทึกว่าทานยาเรียบร้อยแล้ว' : 'บันทึกสถานะข้ามมื้อเรียบร้อย');
       }
     } catch (err: any) {
       alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
@@ -197,45 +172,85 @@ export default function TrackerPage() {
 
   const advice = getMissedDoseAdvice();
 
+  // กำลังโหลดสถานะ
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center">
+          <RefreshCw className="w-6 h-6 text-indigo-600 animate-spin mx-auto mb-2" />
+          <p className="text-xs font-bold text-slate-500">กำลังตรวจสอบสิทธิ์การเข้าใช้งาน...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // กรณีผู้ใช้ยังไม่ได้ล็อกอิน -> แสดงการแจ้งเตือนพร้อมปุ่มไปล็อกอิน/สมัครสมาชิก
+  if (!currentUser) {
+    return (
+      <main className="min-h-screen bg-slate-50 text-slate-900 py-16 px-4">
+        <PanicButton />
+
+        <div className="max-w-md mx-auto space-y-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>กลับหน้าแรก</span>
+          </Link>
+
+          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center space-y-5">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
+              <Lock className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 text-indigo-600 font-extrabold text-[11px] tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-full">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>สงวนสิทธิ์เฉพาะสมาชิก</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+                เข้าสู่ระบบเพื่อบันทึกยา
+              </h1>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                ระบบบันทึกและติดตามการทานยา (PrEP / PEP) เป็นฟังก์ชันข้อมูลส่วนบุคคล กรุณาเข้าสู่ระบบหรือสมัครสมาชิกก่อนใช้งาน เพื่อความปลอดภัยและการแจ้งเตือนที่ต่อเนื่อง
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                href="/auth"
+                className="w-full inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-xs sm:text-sm shadow transition"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>เข้าสู่ระบบ / สมัครสมาชิก</span>
+              </Link>
+            </div>
+
+            <p className="text-[11px] text-slate-400">
+              * ข้อมูลการทานยาจะถูกเข้ารหัสและดูได้เฉพาะบัญชีของคุณเท่านั้น
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // กรณีล็อกอินแล้ว -> แสดงหน้าบันทึกยาตามปกติ (ไม่มีปุ่มโปรไฟล์ซ้ำซ้อนด้านล่าง)
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4 pb-24">
       <PanicButton />
 
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Top Header & Account Status */}
+        {/* Navigation */}
         <div className="flex items-center justify-between">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>หน้าแรก</span>
+            <span>กลับหน้าแรก</span>
           </Link>
-
-          {currentUser ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-semibold border border-indigo-200 flex items-center gap-1.5">
-                <UserIcon className="w-3.5 h-3.5" />
-                <span>{currentUser.email}</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-xs font-bold text-rose-600 hover:text-rose-800 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full transition flex items-center gap-1 cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>ออกจากระบบ</span>
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/auth"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-1.5 rounded-full transition shadow"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>เข้าสู่ระบบด้วยอีเมล</span>
-            </Link>
-          )}
         </div>
 
         <div>
@@ -243,9 +258,7 @@ export default function TrackerPage() {
             ระบบบันทึกและติดตามการทานยา
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            {currentUser 
-              ? `กำลังบันทึกข้อมูลส่วนบุคคลของ: ${currentUser.email}`
-              : 'โหมดนิรนาม (Guest): บันทึกข้อมูลเฉพาะในอุปกรณ์เครื่องนี้'}
+            กำลังบันทึกข้อมูลส่วนบุคคลของ: <strong className="text-slate-700">{currentUser.email}</strong>
           </p>
         </div>
 
@@ -280,15 +293,6 @@ export default function TrackerPage() {
         {/* TAB 1: บันทึกการทานยา */}
         {activeTab === 'tracker' && (
           <div className="space-y-6">
-            {!currentUser && (
-              <div className="bg-indigo-50/70 border border-indigo-200 rounded-2xl p-4 flex items-center justify-between text-xs text-indigo-950">
-                <span>บันทึกแบบนิรนามบนเครื่องนี้ หากต้องการซิงก์ข้อมูลข้ามอุปกรณ์ ให้เข้าสู่ระบบด้วยอีเมล</span>
-                <Link href="/auth" className="font-bold underline text-indigo-700 hover:text-indigo-900 shrink-0 ml-2">
-                  เข้าสู่ระบบ
-                </Link>
-              </div>
-            )}
-
             {/* Adherence Rate Banner */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
               <div className="flex justify-between items-center">
@@ -398,17 +402,17 @@ export default function TrackerPage() {
               </div>
             </div>
 
-            {/* ประวัติรายการ */}
+            {/* ประวัติรายการยา */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-indigo-600" />
-                  <span>{currentUser ? 'ประวัติการบันทึกเฉพาะคุณ (Cloud Sync)' : 'ประวัติการบันทึกบนเครื่องนี้'}</span>
+                  <span>ประวัติการบันทึกยาของคุณ (Cloud Sync)</span>
                 </h2>
                 <button
                   type="button"
                   onClick={checkUserAndFetchLogs}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold"
+                  className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold cursor-pointer"
                 >
                   <RefreshCw className="w-3 h-3" />
                   <span>รีเฟรช</span>
@@ -419,7 +423,7 @@ export default function TrackerPage() {
                 <p className="text-xs text-slate-400 text-center py-4">กำลังโหลดประวัติ...</p>
               ) : logs.length === 0 ? (
                 <div className="text-center py-8 text-slate-400 text-xs">
-                  ยังไม่มีประวัติการบันทึก
+                  ยังไม่มีประวัติการบันทึกยา
                 </div>
               ) : (
                 <div className="space-y-2.5">
