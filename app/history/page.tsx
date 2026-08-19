@@ -26,6 +26,105 @@ interface AssessmentRecord {
   partner_risk?: string;
 }
 
+// ฟังก์ชันแปลงวันที่และเวลาแบบไทยทางการ
+const formatThaiDate = (dateStr: string) => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatThaiFullDate = (dateStr: string) => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
+// ฟังก์ชันแปลค่าทางการแพทย์
+const translateExposureType = (type: string) => {
+  const map: Record<string, string> = {
+    ANAL_RECEPTIVE: 'ทางทวารหนัก (ฝ่ายรับ)',
+    ANAL_INSERTIVE: 'ทางทวารหนัก (ฝ่ายรุก)',
+    VAGINAL_RECEPTIVE: 'ทางช่องคลอด (ฝ่ายรับ)',
+    VAGINAL_INSERTIVE: 'ทางช่องคลอด (ฝ่ายรุก)',
+    ORAL_GIVING: 'การทำออรัลเซ็กส์ (ฝ่ายใช้ปาก)',
+    ORAL_RECEIVING: 'การรับออรัลเซ็กส์ (ฝ่ายถูกใช้ปาก)',
+  };
+  return map[type] || type;
+};
+
+const translateCondom = (condom?: string) => {
+  if (!condom) return 'ไม่ได้ใช้ถุงยางอนามัย';
+  const map: Record<string, string> = {
+    ALWAYS: 'ใช้ถุงยางอนามัยตลอดทุกครั้ง / ไม่รั่วซึม',
+    BROKEN: 'ถุงยางอนามัยฉีกขาด / แตก / หลุด',
+    INCONSISTENT: 'ใช้ไม่สม่ำเสมอ / สวมใส่เพียงบางช่วง',
+    NONE: 'ไม่ได้ใช้ถุงยางอนามัย',
+  };
+  return map[condom] || condom;
+};
+
+const translatePrepStatus = (status?: string) => {
+  if (!status) return 'ไม่ได้ใช้ยาต้านไวรัสป้องกันใดๆ';
+  const map: Record<string, string> = {
+    DAILY_PREP: 'รับประทานยา Daily PrEP ต่อเนื่องสม่ำเสมอ',
+    ON_DEMAND_PREP: 'รับประทานยา PrEP on Demand (สูตร 2-1-1)',
+    PEP: 'อยู่ระหว่างรับประทานยาต้านฉุกเฉิน PEP',
+    NONE: 'ไม่ได้ใช้ยาต้านไวรัสป้องกันใดๆ',
+  };
+  return map[status] || status;
+};
+
+const translatePartnerRisk = (risk?: string) => {
+  if (!risk) return 'ไม่ทราบสถานะผลเลือดของคู่นอน';
+  const map: Record<string, string> = {
+    HIV_UNDETECTABLE: 'มีเชื้อ HIV แต่ตรวจไม่พบเชื้อในกระแสเลือด (U=U)',
+    LOW_NEGATIVE: 'ผลตรวจเลือดเป็นลบชัดเจน (Negative)',
+    UNKNOWN: 'ไม่ทราบสถานะผลเลือดของคู่นอน',
+    HIGH_POSITIVE: 'ผลตรวจเลือดเป็นบวกและไม่ได้รักษา',
+  };
+  return map[risk] || risk;
+};
+
+const translateSymptom = (sym: string) => {
+  const map: Record<string, string> = {
+    discharge: 'มีหนองหรือของเหลวผิดปกติจากท่อปัสสาวะ/ช่องคลอด',
+    burning_urination: 'รู้สึกแสบขัดเวลาปัสสาวะ',
+    painless_sore: 'มีแผลริมแข็ง ไม่เจ็บ บริเวณอวัยวะเพศ/ทวาร/ปาก',
+    rash_palms_soles: 'มีผื่นแดงตามฝ่ามือ ฝ่าเท้า หรือลำตัว',
+    fever_flu: 'มีไข้สูง ต่อมน้ำเหลืองโต เจ็บคอ มีผื่น (คล้ายไข้หวัดใหญ่)',
+    jaundice: 'ตาเหลือง ตัวเหลือง หรือปัสสาวะสีเข้มผิดปกติ',
+  };
+  return map[sym] || sym;
+};
+
+// ฟังก์ชันสร้างคำแนะนำตรวจตามคะแนนความเสี่ยง
+const getClinicalRecommendation = (diseaseName: string, score: number) => {
+  if (score >= 60) {
+    return `พบแพทย์หรือคลินิกเฉพาะทางเพื่อตรวจ ${diseaseName} ทันที • งดการมีเพศสัมพันธ์จนกว่าจะได้รับการยืนยันผลตรวจ`;
+  }
+  if (score >= 30) {
+    return `แนะนำตรวจคัดกรอง ${diseaseName} ตามรอบ Window Period • สวมถุงยางอนามัยทุกครั้ง`;
+  }
+  return `ความเสี่ยงต่ำ แนะนำตรวจคัดกรองสุขภาพทางเพศประจำปีตามปกติ`;
+};
+
+const getDiseaseLevelText = (score: number) => {
+  if (score >= 80) return `CRITICAL (${score}%)`;
+  if (score >= 60) return `HIGH (${score}%)`;
+  if (score >= 30) return `MEDIUM (${score}%)`;
+  return `LOW (${score}%)`;
+};
+
 export default function HistoryPage() {
   const [logs, setLogs] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,38 +161,12 @@ export default function HistoryPage() {
     setLoading(false);
   };
 
-  const formatThaiDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleString('th-TH', {
-      timeZone: 'Asia/Bangkok',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatThaiFullDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('th-TH', {
-      timeZone: 'Asia/Bangkok',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
   const getBadgeColor = (level: string) => {
     switch (level) {
-      case 'CRITICAL':
-        return 'bg-rose-50 border-rose-200 text-rose-700';
-      case 'HIGH':
-        return 'bg-amber-50 border-amber-200 text-amber-700';
-      case 'MEDIUM':
-        return 'bg-yellow-50 border-yellow-200 text-yellow-700';
-      default:
-        return 'bg-emerald-50 border-emerald-200 text-emerald-700';
+      case 'CRITICAL': return 'bg-rose-50 border-rose-200 text-rose-700';
+      case 'HIGH': return 'bg-amber-50 border-amber-200 text-amber-700';
+      case 'MEDIUM': return 'bg-yellow-50 border-yellow-200 text-yellow-700';
+      default: return 'bg-emerald-50 border-emerald-200 text-emerald-700';
     }
   };
 
@@ -101,18 +174,6 @@ export default function HistoryPage() {
     if (score >= 60) return 'bg-rose-600';
     if (score >= 30) return 'bg-amber-500';
     return 'bg-indigo-600';
-  };
-
-  const translateSymptom = (sym: string) => {
-    const map: Record<string, string> = {
-      discharge: 'มีหนองหรือของเหลวผิดปกติจากท่อปัสสาวะ/ช่องคลอด',
-      burning_urination: 'รู้สึกแสบขัดเวลาปัสสาวะ',
-      painless_sore: 'มีแผลริมแข็ง ไม่เจ็บ บริเวณอวัยวะเพศ/ทวาร/ปาก',
-      rash_palms_soles: 'มีผื่นแดงตามฝ่ามือ ฝ่าเท้า หรือลำตัว',
-      fever_flu: 'มีไข้สูง ต่อมน้ำเหลืองโต เจ็บคอ มีผื่น (คล้ายไข้หวัดใหญ่)',
-      jaundice: 'ตาเหลือง ตัวเหลือง หรือปัสสาวะสีเข้มผิดปกติ',
-    };
-    return map[sym] || sym;
   };
 
   const handleEmailRecord = (item: AssessmentRecord) => {
@@ -218,7 +279,7 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {/* State: แสดงรายการประวัติ พร้อมปุ่มพิมพ์ประวัติรายใบ */}
+        {/* State: แสดงรายการประวัติ */}
         {!loading && user && logs.length > 0 && (
           <div className="space-y-4">
             {logs.map((item) => {
@@ -275,7 +336,6 @@ export default function HistoryPage() {
                       <p>อาการที่ระบุ: <strong>{item.symptoms && item.symptoms.length > 0 ? `${item.symptoms.length} รายการ` : 'ไม่มีอาการ'}</strong></p>
                     </div>
 
-                    {/* ปุ่มเปิดใบสรุปประวัติสำหรับยื่นเจ้าหน้าที่ */}
                     <button
                       type="button"
                       onClick={() => setSelectedRecord(item)}
@@ -291,15 +351,15 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {/* MODAL: FORMAL BLACK & WHITE CLINICAL HANDOVER FORM */}
+        {/* MODAL: IDENTICAL CLINICAL HANDOVER FORM */}
         {selectedRecord && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
             <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-300 my-auto">
               
-              {/* Top Controls */}
+              {/* Modal Top Control Bar */}
               <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between print:hidden">
                 <span className="text-xs font-bold tracking-wider">
-                  แบบฟอร์มสรุปข้อมูลความเสี่ยง (ประวัติรอบวันที่ {formatThaiDate(selectedRecord.created_at)})
+                  แบบฟอร์มสรุปข้อมูลความเสี่ยง (แบบทางการ)
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -328,9 +388,10 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              {/* DOCUMENT CONTENT (MONOCHROME CLINICAL FORM) */}
+              {/* FORM CONTENT (IDENTICAL MONOCHROME FORMAT) */}
               <div className="p-8 sm:p-10 space-y-6 text-black bg-white font-sans" id="medical-print-document">
                 
+                {/* Header เอกสารทางการ */}
                 <div className="text-center border-b-2 border-black pb-4 space-y-1">
                   <h1 className="text-base sm:text-lg font-bold tracking-wide">
                     แบบสรุปข้อมูลประวัติความเสี่ยงเพื่อประกอบการคัดกรองเบื้องต้น
@@ -340,20 +401,22 @@ export default function HistoryPage() {
                   </p>
                   <div className="flex justify-between text-[10px] text-gray-600 pt-2">
                     <span>วันที่ประเมิน: {formatThaiFullDate(selectedRecord.created_at)} ({formatThaiDate(selectedRecord.created_at)})</span>
-                    <span>ผู้รับบริการ: {user?.email || 'นิรนาม (Anonymous)'}</span>
+                    <span>สถานะ: นิรนาม (Anonymous)</span>
                   </div>
                 </div>
 
+                {/* ข้อความชี้แจง */}
                 <div className="border border-black p-2.5 text-[11px] leading-relaxed text-gray-800">
-                  <strong>หมายเหตุถึงเจ้าหน้าที่:</strong> เอกสารนี้ดึงจากบันทึกประวัติการคัดกรองตนเองย้อนหลังของผู้รับบริการ เพื่อความสะดวก รวดเร็ว และลดความกังวลในการสนทนาเรื่องส่วนบุคคล สามารถใช้ข้อมูลด้านล่างนี้ประกอบการพิจารณาส่งตรวจได้ทันที
+                  <strong>หมายเหตุถึงเจ้าหน้าที่:</strong> ผู้รับบริการได้บันทึกข้อมูลประวัติความเสี่ยงส่วนบุคคลผ่านระบบคัดกรองตนเองล่วงหน้า เพื่อความสะดวก รวดเร็ว และลดความกังวลในการสนทนาเรื่องส่วนบุคคล สามารถใช้ข้อมูลด้านล่างนี้ประกอบการพิจารณาส่งตรวจได้ทันที
                 </div>
 
+                {/* ตารางประวัติความเสี่ยง 6 หัวข้อ (ครบถ้วนเหมือนหน้า Results) */}
                 <div className="space-y-1.5">
-                  <h2 className="text-xs font-bold">1. ข้อมูลการสัมผัสเชื้อและอาการ ณ วันประเมิน</h2>
+                  <h2 className="text-xs font-bold">1. ข้อมูลการสัมผัสเชื้อและพฤติกรรมเสี่ยง</h2>
                   <table className="w-full text-xs border border-black border-collapse">
                     <tbody>
                       <tr className="border-b border-black">
-                        <td className="p-2 font-bold w-1/3 border-r border-black bg-gray-100">ระยะเวลาสัมผัสเชื้อ ณ วันประเมิน</td>
+                        <td className="p-2 font-bold w-1/3 border-r border-black bg-gray-100">ระยะเวลาสัมผัสเชื้อล่าสุด</td>
                         <td className="p-2">
                           {selectedRecord.days_since_exposure} วันที่ผ่านมา ({selectedRecord.days_since_exposure * 24} ชั่วโมง)
                           {selectedRecord.days_since_exposure <= 3 && (
@@ -364,56 +427,90 @@ export default function HistoryPage() {
                         </td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="p-2 font-bold border-r border-black bg-gray-100">ระดับความเสี่ยงรวมที่ประเมินได้</td>
-                        <td className="p-2 font-bold">{selectedRecord.overall_level}</td>
+                        <td className="p-2 font-bold border-r border-black bg-gray-100">ลักษณะกิจกรรม</td>
+                        <td className="p-2">
+                          {selectedRecord.exposure_types && selectedRecord.exposure_types.length > 0
+                            ? selectedRecord.exposure_types.map(translateExposureType).join(', ')
+                            : 'ทางช่องคลอด / ทางทวารหนัก (ฝ่ายรับ)'}
+                        </td>
+                      </tr>
+                      <tr className="border-b border-black">
+                        <td className="p-2 font-bold border-r border-black bg-gray-100">การใช้ถุงยางอนามัย</td>
+                        <td className="p-2">{translateCondom(selectedRecord.condom_used)}</td>
+                      </tr>
+                      <tr className="border-b border-black">
+                        <td className="p-2 font-bold border-r border-black bg-gray-100">การใช้ยาป้องกัน (PrEP / PEP)</td>
+                        <td className="p-2">{translatePrepStatus(selectedRecord.prep_pep_status)}</td>
+                      </tr>
+                      <tr className="border-b border-black">
+                        <td className="p-2 font-bold border-r border-black bg-gray-100">สถานะผลเลือดของคู่นอน</td>
+                        <td className="p-2">{translatePartnerRisk(selectedRecord.partner_risk)}</td>
                       </tr>
                       <tr>
                         <td className="p-2 font-bold border-r border-black bg-gray-100">อาการทางกายภาพที่ระบุ</td>
                         <td className="p-2 font-bold">
                           {selectedRecord.symptoms && selectedRecord.symptoms.length > 0
                             ? selectedRecord.symptoms.map(translateSymptom).join(', ')
-                            : 'ไม่มีอาการทางกายภาพผิดปกติในขณะนั้น'}
+                            : 'ไม่มีอาการทางกายภาพผิดปกติในขณะนี้'}
                         </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
+                {/* ตารางสรุปความเสี่ยง 4 โรค (มีระดับความเสี่ยงและคำแนะนำตรวจแบบละเอียด) */}
                 <div className="space-y-1.5">
-                  <h2 className="text-xs font-bold">2. ผลการวิเคราะห์ระดับความเสี่ยงจำแนกรายโรค (Risk Stratification)</h2>
+                  <h2 className="text-xs font-bold">2. ผลการวิเคราะห์ระดับความเสี่ยงเบื้องต้น (Risk Stratification)</h2>
                   <table className="w-full text-xs border border-black border-collapse text-left">
                     <thead>
                       <tr className="border-b border-black bg-gray-100">
                         <th className="p-2 border-r border-black w-2/5">เชื้อก่อโรค / สภาวะ</th>
-                        <th className="p-2 border-r border-black text-center w-1/4">ระดับคะแนนความเสี่ยง</th>
-                        <th className="p-2">แนวทางการตรวจแนะนำ</th>
+                        <th className="p-2 border-r border-black text-center w-1/4">ระดับความเสี่ยง</th>
+                        <th className="p-2">คำแนะนำการตรวจเบื้องต้น</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="border-b border-black">
                         <td className="p-2 border-r border-black font-semibold">เชื้อเอชไอวี (HIV)</td>
-                        <td className="p-2 border-r border-black text-center font-bold">{selectedRecord.hiv_score}%</td>
-                        <td className="p-2 text-[11px]">ตรวจด้วย 4th Gen Ag/Ab Combo Test หรือ NAT</td>
+                        <td className="p-2 border-r border-black text-center font-bold">
+                          {getDiseaseLevelText(selectedRecord.hiv_score)}
+                        </td>
+                        <td className="p-2 text-[11px]">
+                          {getClinicalRecommendation('HIV', selectedRecord.hiv_score)}
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="p-2 border-r border-black font-semibold">โรคซิฟิลิส (Syphilis)</td>
-                        <td className="p-2 border-r border-black text-center font-bold">{selectedRecord.syphilis_score}%</td>
-                        <td className="p-2 text-[11px]">ตรวจหาแอนติบอดีด้วย RPR / VDRL / TPPA</td>
+                        <td className="p-2 border-r border-black text-center font-bold">
+                          {getDiseaseLevelText(selectedRecord.syphilis_score)}
+                        </td>
+                        <td className="p-2 text-[11px]">
+                          {getClinicalRecommendation('ซิฟิลิส', selectedRecord.syphilis_score)}
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="p-2 border-r border-black font-semibold">หนองในแท้ / เทียม (Gonorrhea/Chlamydia)</td>
-                        <td className="p-2 border-r border-black text-center font-bold">{selectedRecord.gonorrhea_score}%</td>
-                        <td className="p-2 text-[11px]">ตรวจปัสสาวะหรือป้ายสารคัดหลั่งด้วยวิธี NAATs / PCR</td>
+                        <td className="p-2 border-r border-black text-center font-bold">
+                          {getDiseaseLevelText(selectedRecord.gonorrhea_score)}
+                        </td>
+                        <td className="p-2 text-[11px]">
+                          {getClinicalRecommendation('หนองใน', selectedRecord.gonorrhea_score)}
+                        </td>
                       </tr>
                       <tr>
                         <td className="p-2 border-r border-black font-semibold">ไวรัสตับอักเสบบี (Hepatitis B)</td>
-                        <td className="p-2 border-r border-black text-center font-bold">{selectedRecord.hepatitis_b_score}%</td>
-                        <td className="p-2 text-[11px]">ตรวจคัดกรอง HBsAg และ Anti-HBs</td>
+                        <td className="p-2 border-r border-black text-center font-bold">
+                          {getDiseaseLevelText(selectedRecord.hepatitis_b_score)}
+                        </td>
+                        <td className="p-2 text-[11px]">
+                          {getClinicalRecommendation('ไวรัสตับอักเสบบี', selectedRecord.hepatitis_b_score)}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
+                {/* ท้ายเอกสาร */}
                 <div className="border-t border-black pt-3 flex justify-between text-[10px] text-gray-500">
                   <span>* ข้อมูลนี้ใช้เพื่อประกอบการซักประวัติเท่านั้น ไม่ใช่ผลการตรวจทางห้องปฏิบัติการ</span>
                   <span>STD Risk Screening System</span>
@@ -423,6 +520,7 @@ export default function HistoryPage() {
             </div>
           </div>
         )}
+
       </div>
     </main>
   );
