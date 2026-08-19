@@ -3,9 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { 
-  ShieldCheck, Activity, MapPin, Pill, ArrowRight, 
+  Activity, MapPin, Pill, ArrowRight, 
   Lock, Calendar, CheckCircle2, Sparkles, Shield,
-  HeartPulse, Dna, Syringe, TestTube, Cross
+  HeartPulse, Dna, TestTube, Syringe, Plus
 } from 'lucide-react';
 import PanicButton from '@/components/panic-button';
 
@@ -14,71 +14,87 @@ export default function Home() {
     <main className="min-h-screen bg-slate-50 text-slate-900 pb-20 overflow-x-hidden">
       <PanicButton />
 
-      {/* Hero Section with Floating Medical & Viral Glow Graphics */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-950/[0.04] via-purple-900/[0.02] to-slate-50 border-b border-slate-200/80 pt-12 pb-20 px-4 sm:px-6">
+      {/* 🔮 ฝัง Keyframes Animation โดยตรง (ไม่พึ่ง globals.css) */}
+      <style jsx global>{`
+        @keyframes float-med-1 {
+          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+          50% { transform: translateY(-18px) rotate(6deg) scale(1.05); }
+        }
+        @keyframes float-med-2 {
+          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+          50% { transform: translateY(16px) rotate(-6deg) scale(0.95); }
+        }
+        @keyframes float-med-3 {
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-12px) scale(1.08); }
+        }
+        @keyframes glow-pulse {
+          0%, 100% { filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.5)); opacity: 0.85; }
+          50% { filter: drop-shadow(0 0 28px rgba(168, 85, 247, 0.9)); opacity: 1; }
+        }
+        .animate-med-float1 { animation: float-med-1 6s ease-in-out infinite, glow-pulse 4s ease-in-out infinite; }
+        .animate-med-float2 { animation: float-med-2 7.5s ease-in-out infinite, glow-pulse 5s ease-in-out infinite; animation-delay: -2s; }
+        .animate-med-float3 { animation: float-med-3 5.5s ease-in-out infinite, glow-pulse 3.5s ease-in-out infinite; animation-delay: -1s; }
+      `}</style>
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/80 via-white to-slate-50 border-b border-slate-200/80 pt-12 pb-20 px-4 sm:px-6">
         
-        {/* ================= BACKGROUND GLOW & MEDICAL PARTICLES ================= */}
-        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
+        {/* ================= BACKGROUND MEDICAL GLOW GRAPHICS (z-0 ปลอดภัย ไม่โดนทับ) ================= */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
           
-          {/* Ambient Lighting Spheres */}
-          <div className="absolute top-[-80px] left-[15%] w-[480px] h-[480px] bg-gradient-to-tr from-indigo-400/25 to-purple-400/20 rounded-full blur-[100px]" />
-          <div className="absolute top-[20%] right-[10%] w-[450px] h-[450px] bg-gradient-to-bl from-violet-400/25 to-pink-400/15 rounded-full blur-[110px]" />
-          <div className="absolute bottom-0 left-[35%] w-[380px] h-[380px] bg-cyan-300/15 rounded-full blur-[90px]" />
+          {/* แสงฟุ้งพื้นหลัง */}
+          <div className="absolute top-[-50px] left-[10%] w-[450px] h-[450px] bg-indigo-300/30 rounded-full blur-[100px]" />
+          <div className="absolute top-[10%] right-[5%] w-[450px] h-[450px] bg-purple-300/25 rounded-full blur-[100px]" />
 
-          {/* Subtle Cyber Grid */}
-          <div 
-            className="absolute inset-0 opacity-[0.035]" 
-            style={{
-              backgroundImage: 'radial-gradient(#6366f1 1.5px, transparent 1.5px)',
-              backgroundSize: '22px 22px'
-            }} 
-          />
-
-          {/* 🧬 1. เซลล์ไวรัสชีวภาพ / เชื้อจุลชีพ (Virus Capsule Shape) - มุมบนซ้าย */}
-          <div className="absolute top-8 left-6 sm:left-16 animate-float-1">
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-indigo-500/20 to-purple-500/30 border border-indigo-400/40 backdrop-blur-md flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <span className="w-3 h-3 rounded-full bg-indigo-500 animate-ping absolute" />
-              <Activity className="w-8 h-8 sm:w-9 sm:h-9 text-indigo-600/80" />
-              {/* หนามไวรัสรอบวง (Virus Spikes) */}
-              <div className="absolute -top-1.5 w-2 h-2 rounded-full bg-indigo-500/60" />
-              <div className="absolute -bottom-1.5 w-2 h-2 rounded-full bg-purple-500/60" />
-              <div className="absolute -left-1.5 w-2 h-2 rounded-full bg-indigo-500/60" />
-              <div className="absolute -right-1.5 w-2 h-2 rounded-full bg-purple-500/60" />
+          {/* 🧬 1. เซลล์ชีวภาพ/เชื้อจุลชีพเรืองแสง (มุมบนซ้าย) */}
+          <div className="absolute top-6 left-4 sm:left-12 animate-med-float1">
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/80 border-2 border-indigo-400 backdrop-blur-md flex items-center justify-center shadow-lg shadow-indigo-300">
+              <Activity className="w-7 h-7 text-indigo-600" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-indigo-500 animate-ping" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-indigo-600" />
             </div>
           </div>
 
-          {/* 🧬 2. โมเลกุล DNA พันธุกรรม - กลางค่อนขวา */}
-          <div className="absolute top-12 right-8 sm:right-24 animate-float-2">
-            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-purple-500/15 to-pink-500/15 border border-purple-300/40 backdrop-blur-md shadow-xl shadow-purple-500/20">
-              <Dna className="w-9 h-9 sm:w-12 sm:h-12 text-purple-600/85" />
+          {/* 🧬 2. โมเลกุล DNA พันธุกรรม (มุมบนขวา) */}
+          <div className="absolute top-8 right-6 sm:right-20 animate-med-float2">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/80 border-2 border-purple-400 backdrop-blur-md shadow-lg shadow-purple-300">
+              <Dna className="w-7 h-7 sm:w-8 sm:h-8 text-purple-600" />
             </div>
           </div>
 
-          {/* 💉 3. หลอดทดลองตรวจเชื้อ (Test Tube Clinical Analyzer) - ด้านล่างซ้าย */}
-          <div className="absolute bottom-8 left-8 sm:left-28 animate-float-3">
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-cyan-500/15 border border-cyan-300/50 backdrop-blur-md shadow-lg shadow-cyan-500/20 flex items-center gap-2">
-              <TestTube className="w-7 h-7 sm:w-8 sm:h-8 text-cyan-600" />
-              <span className="text-[10px] font-black tracking-wider text-cyan-700 uppercase bg-cyan-100/80 px-2 py-0.5 rounded-md hidden sm:inline">
-                Lab Screening
+          {/* 🧪 3. หลอดทดลองตรวจเชื้อ Lab Test (มุมล่างซ้าย) */}
+          <div className="absolute bottom-6 left-6 sm:left-24 animate-med-float3">
+            <div className="p-3 rounded-2xl bg-white/80 border-2 border-cyan-400 backdrop-blur-md shadow-lg shadow-cyan-300 flex items-center gap-2">
+              <TestTube className="w-6 h-6 sm:w-7 sm:h-7 text-cyan-600" />
+              <span className="text-[10px] font-black text-cyan-700 uppercase bg-cyan-100 px-2 py-0.5 rounded-md hidden sm:inline">
+                Lab Screen
               </span>
             </div>
           </div>
 
-          {/* 💊 4. สัญลักษณ์ทางการแพทย์และยาป้องกัน (Medical Shield & Pill) - ด้านล่างขวา */}
-          <div className="absolute bottom-10 right-6 sm:right-16 animate-float-4">
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-tr from-emerald-500/15 to-teal-500/20 border border-emerald-300/50 backdrop-blur-md shadow-lg shadow-emerald-500/20 flex items-center gap-2">
-              <Pill className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          {/* 💉 4. เข็มฉีดยา / วัคซีนป้องกัน (กึ่งกลางขวาล่าง) */}
+          <div className="absolute bottom-8 right-8 sm:right-32 animate-med-float1">
+            <div className="p-3 rounded-2xl bg-white/80 border-2 border-emerald-400 backdrop-blur-md shadow-lg shadow-emerald-300">
+              <Syringe className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600" />
+            </div>
+          </div>
+
+          {/* ➕ 5. กากบาทสัญลักษณ์การแพทย์เรืองแสง */}
+          <div className="absolute top-1/2 left-4 sm:left-8 animate-med-float2 hidden sm:block">
+            <div className="p-2 rounded-xl bg-rose-50 border border-rose-300 shadow-md shadow-rose-200">
+              <Plus className="w-4 h-4 text-rose-500" />
             </div>
           </div>
 
         </div>
-        {/* ================= END BACKGROUND PARTICLES ================= */}
+        {/* ================= END BACKGROUND GRAPHICS ================= */}
 
+        {/* เนื้อหาหลักด้านหน้า (z-10 ลอยอยู่เหนือกราฟิก) */}
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             
-            {/* ฝั่งซ้าย: ข้อความหลัก */}
+            {/* ฝั่งซ้าย: Headline */}
             <div className="lg:col-span-7 space-y-6 text-left">
               <div className="inline-flex items-center gap-2 bg-emerald-100/90 border border-emerald-300 px-3.5 py-1.5 rounded-full text-emerald-900 text-xs font-extrabold shadow-sm backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
@@ -97,7 +113,7 @@ export default function Home() {
                 วิเคราะห์ความเสี่ยงเฉพาะบุคคล (HIV, ซิฟิลิส, หนองใน, ไวรัสตับอักเสบ) ด้วยอัลกอริทึมการแพทย์ พร้อมปักหมุดระยะตรวจ Window Period และค้นหาคลินิกตรวจนิรนามใกล้คุณ
               </p>
 
-              {/* ปุ่ม Action */}
+              {/* ปุ่มกด Action */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href="/assessment"
@@ -109,7 +125,7 @@ export default function Home() {
 
                 <Link
                   href="/clinics"
-                  className="inline-flex items-center justify-center gap-2 bg-white/90 hover:bg-white text-slate-700 border border-slate-300 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-sm hover:shadow transition cursor-pointer backdrop-blur-sm"
+                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-sm hover:shadow transition cursor-pointer"
                 >
                   <MapPin className="w-4 h-4 text-indigo-600" />
                   <span>ค้นหาคลินิกใกล้ฉัน</span>
