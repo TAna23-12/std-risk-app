@@ -11,10 +11,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { userId, ...inputData }: { userId?: string } & UserAssessmentInput = body;
 
-    // คำนวณความเสี่ยง
+    // 1. คำนวณความเสี่ยง
     const result = calculateSTDRisk(inputData);
 
-    // ถ้ามี userId ส่งมา (ผู้ใช้ล็อกอิน) จึงจะบันทึกลง Database Supabase
+    // 2. บันทึกลง Supabase (ใส่ await เพื่อให้ทำงานเสร็จสมบูรณ์)
     if (userId) {
       const insertPayload = {
         user_id: userId,
@@ -31,12 +31,12 @@ export async function POST(req: NextRequest) {
         is_emergency_pep: result.isEmergencyPEP,
       };
 
-      const { error: dbError } = await supabase
+      const { data, error: dbError } = await supabase
         .from('assessment_logs')
         .insert([insertPayload]);
 
       if (dbError) {
-        console.error('Database Insert Error:', dbError);
+        console.error('Supabase Insert Error:', dbError);
       }
     }
 
