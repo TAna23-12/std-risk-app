@@ -5,121 +5,123 @@ import Link from 'next/link';
 import { 
   Activity, MapPin, Pill, ArrowRight, 
   Lock, Calendar, CheckCircle2, Sparkles, Shield,
-  HeartPulse, TestTube, Syringe
+  HeartPulse, TestTube, Syringe, AlertTriangle, FileText,
+  Microscope, Stethoscope, Dna, Clock, ChevronRight
 } from 'lucide-react';
 import PanicButton from '@/components/panic-button';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pb-20 overflow-x-hidden">
+    <main className="min-h-screen bg-slate-50 text-slate-900 pb-24 overflow-x-hidden">
       <PanicButton />
 
-      {/* 🔮 CSS 3D DNA & Organic Soft Glow Animations */}
+      {/* 🔮 Animation Engine สำหรับอนุภาคชีวภาพและการแพทย์ */}
       <style jsx global>{`
-        @keyframes dna-rotate {
-          0% { transform: rotateY(0deg); }
-          100% { transform: rotateY(360deg); }
+        @keyframes dna-spin {
+          0% { transform: rotateY(0deg) rotateX(12deg); }
+          100% { transform: rotateY(360deg) rotateX(12deg); }
         }
-        @keyframes float-smooth {
+        @keyframes microbe-pulse {
+          0%, 100% { transform: scale(1) translateY(0px) rotate(0deg); filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.45)); }
+          50% { transform: scale(1.08) translateY(-14px) rotate(8deg); filter: drop-shadow(0 0 32px rgba(168, 85, 247, 0.8)); }
+        }
+        @keyframes float-fluid-1 {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-16px) rotate(6deg); }
+          50% { transform: translateY(-20px) rotate(10deg); }
         }
-        @keyframes float-smooth-rev {
+        @keyframes float-fluid-2 {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(14px) rotate(-6deg); }
+          50% { transform: translateY(18px) rotate(-12deg); }
         }
-        @keyframes soft-pulse {
-          0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.4)); }
-          50% { opacity: 0.95; filter: drop-shadow(0 0 30px rgba(168, 85, 247, 0.8)); }
+        @keyframes float-fluid-3 {
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-15px) scale(1.06); }
         }
 
-        .dna-container {
-          perspective: 800px;
-        }
-        .dna-strand {
-          transform-style: preserve-3d;
-          animation: dna-rotate 7s linear infinite;
-        }
-        .animate-float-soft1 {
-          animation: float-smooth 6s ease-in-out infinite, soft-pulse 4s ease-in-out infinite;
-        }
-        .animate-float-soft2 {
-          animation: float-smooth-rev 7.5s ease-in-out infinite, soft-pulse 5s ease-in-out infinite;
-          animation-delay: -2s;
-        }
+        .dna-perspective { perspective: 900px; }
+        .dna-axis { transform-style: preserve-3d; animation: dna-spin 8s linear infinite; }
+        .animate-microbe { animation: microbe-pulse 5s ease-in-out infinite; }
+        .animate-med-1 { animation: float-fluid-1 7s ease-in-out infinite; }
+        .animate-med-2 { animation: float-fluid-2 8.5s ease-in-out infinite; animation-delay: -2s; }
+        .animate-med-3 { animation: float-fluid-3 6s ease-in-out infinite; animation-delay: -3.5s; }
       `}</style>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 border-b border-slate-200/80 pt-12 pb-20 px-4 sm:px-6">
+      {/* ================= HERO SECTION ================= */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-950/[0.04] via-white to-slate-50 border-b border-slate-200/80 pt-12 pb-20 px-4 sm:px-6">
         
-        {/* ================= BACKGROUND GLOW & 3D DNA (ไร้กรอบ นุ่มนวล) ================= */}
+        {/* ================= BACKGROUND MEDICAL PARTICLES (กระจายตัวรอบจอ ไร้กรอบ) ================= */}
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          
-          {/* แสงฟุ้งพื้นหลัง */}
-          <div className="absolute top-[-60px] left-[15%] w-[460px] h-[460px] bg-indigo-300/25 rounded-full blur-[110px]" />
-          <div className="absolute top-[15%] right-[10%] w-[420px] h-[420px] bg-purple-300/20 rounded-full blur-[110px]" />
+          {/* แสงฟุ้ง Ambient Lighting */}
+          <div className="absolute -top-24 left-[10%] w-[520px] h-[520px] bg-indigo-400/20 rounded-full blur-[120px]" />
+          <div className="absolute top-[20%] right-[5%] w-[480px] h-[480px] bg-purple-400/20 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 left-[35%] w-[400px] h-[400px] bg-cyan-300/15 rounded-full blur-[100px]" />
 
-          {/* 🧬 1. เกลียวคู่ DNA 3 มิติ หมุนควงสว่าน (มุมบนขวา) */}
-          <div className="absolute top-8 right-6 sm:right-24 dna-container">
-            <div className="dna-strand flex flex-col items-center gap-2 py-2">
-              {[0, 30, 60, 90, 120, 150, 180, 210, 240].map((deg, i) => (
+          {/* 🧬 1. สายเกลียวคู่ DNA 3D สมจริง (มุมบนขวา) */}
+          <div className="absolute top-6 right-6 sm:right-24 dna-perspective opacity-80">
+            <div className="dna-axis flex flex-col items-center gap-2 py-2">
+              {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg, i) => (
                 <div
                   key={i}
-                  className="w-16 sm:w-20 h-1.5 flex items-center justify-between"
-                  style={{
-                    transform: `rotateY(${deg}deg)`,
-                  }}
+                  className="w-20 sm:w-24 h-1.5 flex items-center justify-between"
+                  style={{ transform: `rotateY(${deg}deg)` }}
                 >
-                  <span className="w-3 h-3 rounded-full bg-indigo-500 shadow-md shadow-indigo-400" />
-                  <span className="h-[1px] w-full bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 opacity-60" />
-                  <span className="w-3 h-3 rounded-full bg-purple-500 shadow-md shadow-purple-400" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-md shadow-indigo-400" />
+                  <span className="h-[1px] w-full bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 opacity-70" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-400" />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* 🦠 2. เซลล์เชื้อจุลชีพ/ไวรัส ลอยไร้กรอบ (มุมบนซ้าย) */}
-          <div className="absolute top-8 left-6 sm:left-14 animate-float-soft1">
-            <div className="relative text-indigo-600/80">
-              <Activity className="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-[0_0_16px_rgba(99,102,241,0.6)]" />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping" />
+          {/* 🦠 2. โมเดลเซลล์ไวรัส/จุลชีพ (Viral Microbe Sphere) - มุมบนซ้าย */}
+          <div className="absolute top-8 left-6 sm:left-14 animate-microbe opacity-85">
+            <div className="relative text-indigo-600">
+              <Activity className="w-14 h-14 sm:w-16 sm:h-16 drop-shadow-[0_0_20px_rgba(99,102,241,0.7)]" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-indigo-500 animate-ping" />
+              <span className="absolute -bottom-2 -left-1 w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
             </div>
           </div>
 
-          {/* 🧪 3. หลอดทดลอง Lab Screening ไร้กรอบ (มุมล่างซ้าย) */}
-          <div className="absolute bottom-10 left-8 sm:left-24 animate-float-soft2">
-            <div className="text-cyan-500/80 flex items-center gap-2">
-              <TestTube className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-[0_0_18px_rgba(6,182,212,0.6)]" />
+          {/* 🧪 3. หลอดตรวจเชื้อคลินิก Lab Test Tube (มุมล่างซ้าย) */}
+          <div className="absolute bottom-8 left-8 sm:left-24 animate-med-2 opacity-80">
+            <div className="text-cyan-500">
+              <TestTube className="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-[0_0_20px_rgba(6,182,212,0.7)]" />
             </div>
           </div>
 
-          {/* 💉 4. เข็มฉีดยา / วัคซีน ไร้กรอบ (มุมล่างขวา) */}
-          <div className="absolute bottom-12 right-8 sm:right-32 animate-float-soft1">
-            <div className="text-emerald-500/80">
-              <Syringe className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-[0_0_18px_rgba(16,185,129,0.6)]" />
+          {/* 💉 4. เข็มฉีดยา / วัคซีน Clinical Vaccine (มุมล่างขวา) */}
+          <div className="absolute bottom-10 right-8 sm:right-32 animate-med-1 opacity-80">
+            <div className="text-emerald-500">
+              <Syringe className="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-[0_0_20px_rgba(16,185,129,0.7)]" />
             </div>
           </div>
 
-          {/* 💊 5. เม็ดยาป้องกันลอยเรืองแสง (กลางซ้าย) */}
-          <div className="absolute top-1/2 left-4 sm:left-10 animate-float-soft2 hidden sm:block">
-            <div className="text-purple-500/70">
-              <Pill className="w-8 h-8 drop-shadow-[0_0_14px_rgba(168,85,247,0.6)]" />
+          {/* 🔬 5. กล้องจุลทรรศน์ตรวจวิเคราะห์ Microscope (กลางขวา) */}
+          <div className="absolute top-1/2 right-4 sm:right-10 animate-med-3 opacity-70 hidden sm:block">
+            <div className="text-purple-500">
+              <Microscope className="w-10 h-10 drop-shadow-[0_0_16px_rgba(168,85,247,0.6)]" />
             </div>
           </div>
 
+          {/* 💊 6. ยาต้านไวรัส PrEP / PEP Capsule (กลางซ้าย) */}
+          <div className="absolute top-1/2 left-4 sm:left-10 animate-med-1 opacity-75 hidden sm:block">
+            <div className="text-pink-500">
+              <Pill className="w-9 h-9 drop-shadow-[0_0_16px_rgba(236,72,153,0.6)]" />
+            </div>
+          </div>
         </div>
-        {/* ================= END BACKGROUND ================= */}
 
-        {/* เนื้อหาหลักด้านหน้า */}
+        {/* ================= MAIN CONTENT ================= */}
         <div className="max-w-6xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
             
-            {/* ฝั่งซ้าย: Headline & Actions */}
-            <div className="lg:col-span-7 space-y-6 text-left">
+            {/* ฝั่งซ้าย: ข้อมูลหัวข้อ & ปุ่ม Action (6 คอลัมน์) */}
+            <div className="lg:col-span-6 space-y-6 text-left">
+              
               <div className="inline-flex items-center gap-2 bg-emerald-100/90 border border-emerald-300 px-3.5 py-1.5 rounded-full text-emerald-900 text-xs font-extrabold shadow-sm backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
                 <Lock className="w-3.5 h-3.5" />
-                <span>100% Anonymous • ไม่ระบุตัวตน • มาตรฐาน CDC</span>
+                <span>100% Anonymous • อ้างอิงแนวทางเวชปฏิบัติ CDC & WHO</span>
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
@@ -130,16 +132,16 @@ export default function Home() {
               </h1>
 
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl font-medium">
-                วิเคราะห์ความเสี่ยงเฉพาะบุคคล (HIV, ซิฟิลิส, หนองใน, ไวรัสตับอักเสบ) ด้วยอัลกอริทึมการแพทย์ พร้อมปักหมุดระยะตรวจ Window Period และค้นหาคลินิกตรวจนิรนามใกล้คุณ
+                เครื่องมือประเมินความเสี่ยงทางการแพทย์เฉพาะบุคคล (HIV, ซิฟิลิส, หนองในแท้/เทียม, ไวรัสตับอักเสบบี) พร้อมระบบปักหมุดระยะตรวจ Window Period ที่แม่นยำ และค้นหาคลินิกตรวจนิรนามใกล้คุณ
               </p>
 
-              {/* ปุ่ม Action */}
+              {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href="/assessment"
                   className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-3.5 rounded-2xl font-bold text-sm shadow-xl shadow-indigo-300/60 hover:shadow-indigo-400 transition cursor-pointer"
                 >
-                  <span>เริ่มทำแบบประเมินฟรี</span>
+                  <span>เริ่มทำแบบประเมินความเสี่ยง</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
@@ -152,48 +154,57 @@ export default function Home() {
                 </Link>
               </div>
 
-              {/* Trust Badges */}
+              {/* Trust Badges 3 ข้อ */}
               <div className="pt-6 grid grid-cols-3 gap-2 border-t border-slate-200/80 text-[11px] font-bold text-slate-600">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                  <span>เกณฑ์การแพทย์ CDC</span>
+                  <span>มาตรฐานแนวทาง CDC</span>
                 </div>
                 <div className="flex items-center gap-1.5 border-x border-slate-200 px-2">
                   <Sparkles className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                  <span>วิเคราะห์เฉพาะบุคคล</span>
+                  <span>Clinical Matrix Algorithm</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Shield className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                  <span>เข้ารหัสปลอดภัย 100%</span>
+                  <span>ไม่เก็บข้อมูลส่วนบุคคล 100%</span>
                 </div>
               </div>
+
             </div>
 
-            {/* ฝั่งขวา: Card จำลองการวิเคราะห์ (ครบทั้ง 4 โรค) */}
-            <div className="lg:col-span-5 relative">
-              <div className="bg-white/95 backdrop-blur-xl p-6 rounded-3xl border border-indigo-200/70 shadow-2xl shadow-indigo-200/50 space-y-4">
+            {/* ฝั่งขวา: Clinical Dashboard Preview Card แบบละเอียดทางการ (6 คอลัมน์) */}
+            <div className="lg:col-span-6 relative">
+              <div className="bg-white/95 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-indigo-200/80 shadow-2xl shadow-indigo-200/60 space-y-4">
                 
+                {/* Dashboard Header */}
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                      <HeartPulse className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shadow-xs">
+                      <HeartPulse className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-800">ตัวอย่างผลวิเคราะห์ส่วนบุคคล</h4>
-                      <p className="text-[10px] text-slate-400">Clinical Risk Matrix (4 โรคหลัก)</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">ตัวอย่างผลวิเคราะห์ทางคลินิก</h4>
+                      <p className="text-[10px] text-slate-400">Clinical Risk Stratification Report</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    ความเสี่ยงต่ำ
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ระดับ: LOW RISK
+                    </span>
+                  </div>
                 </div>
 
-                <div className="space-y-2.5">
+                {/* 4 Multi-Factor Risk Metric Progress Bars */}
+                <div className="space-y-3 pt-1">
+                  
                   {/* HIV */}
                   <div>
-                    <div className="flex justify-between text-[11px] font-bold mb-1">
-                      <span className="text-slate-600">HIV (ความเสี่ยง)</span>
-                      <span className="text-indigo-600">5%</span>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                        เชื้อไวรัสเอชไอวี (HIV-1 / HIV-2)
+                      </span>
+                      <span className="text-indigo-600 font-extrabold">5% (ต่ำ)</span>
                     </div>
                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                       <div className="bg-indigo-600 h-full w-[5%]" />
@@ -202,9 +213,12 @@ export default function Home() {
 
                   {/* ซิฟิลิส */}
                   <div>
-                    <div className="flex justify-between text-[11px] font-bold mb-1">
-                      <span className="text-slate-600">ซิฟิลิส (Syphilis)</span>
-                      <span className="text-emerald-600">12%</span>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                        โรคซิฟิลิส (Treponema pallidum)
+                      </span>
+                      <span className="text-emerald-600 font-extrabold">12% (ต่ำ)</span>
                     </div>
                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                       <div className="bg-emerald-500 h-full w-[12%]" />
@@ -213,33 +227,59 @@ export default function Home() {
 
                   {/* หนองใน */}
                   <div>
-                    <div className="flex justify-between text-[11px] font-bold mb-1">
-                      <span className="text-slate-600">หนองใน (Gonorrhea)</span>
-                      <span className="text-amber-600">18%</span>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-500" />
+                        หนองในแท้และหนองในเทียม (NG / CT)
+                      </span>
+                      <span className="text-amber-600 font-extrabold">18% (ปานกลาง)</span>
                     </div>
                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                       <div className="bg-amber-500 h-full w-[18%]" />
                     </div>
                   </div>
 
-                  {/* ไวรัสตับอักเสบบี (เพิ่มเข้ามาให้ครบ 4 โรค) */}
+                  {/* ไวรัสตับอักเสบบี */}
                   <div>
-                    <div className="flex justify-between text-[11px] font-bold mb-1">
-                      <span className="text-slate-600">ไวรัสตับอักเสบบี (Hepatitis B)</span>
-                      <span className="text-teal-600">3%</span>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-teal-500" />
+                        ไวรัสตับอักเสบบี (Hepatitis B - HBsAg)
+                      </span>
+                      <span className="text-teal-600 font-extrabold">3% (ต่ำ)</span>
                     </div>
                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                       <div className="bg-teal-500 h-full w-[3%]" />
                     </div>
                   </div>
+
                 </div>
 
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 flex items-start gap-3">
-                  <Calendar className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                  <div className="text-[11px] text-slate-600 leading-snug">
-                    <strong className="text-slate-800">แนะนำระยะเวลาตรวจที่แม่นยำ:</strong>
-                    <p className="text-slate-500 mt-0.5">ตรวจได้ตั้งแต่วันที่ 14 เป็นต้นไป ด้วยวิธี 4th Gen Combo Test</p>
+                {/* กล่องสรุปผลการแพทย์ 2 ช่อง (Window Period & PEP Protocol) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  
+                  {/* กล่อง Window Period */}
+                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>หน้าต่างตรวจ (Window Period)</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 leading-snug">
+                      เริ่มตรวจได้ตั้งแต่ <strong>วันที่ 14</strong> หลังสัมผัสเชื้อ ด้วยวิธี 4th Gen Ag/Ab Combo
+                    </p>
                   </div>
+
+                  {/* กล่อง PEP Status */}
+                  <div className="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200/80 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>สถานะการรับยา PEP ฉุกเฉิน</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-700 leading-snug">
+                      เหตุการณ์เกิดไม่เกิน 72 ชม. สามารถปรึกษาแพทย์เพื่อรับยาต้านฉุกเฉินได้ทันที
+                    </p>
+                  </div>
+
                 </div>
 
               </div>
@@ -249,7 +289,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Feature Grid (4 การ์ดฟีเจอร์หลัก) */}
+      {/* ================= FEATURE GRID ================= */}
       <section className="max-w-6xl mx-auto px-4 mt-12">
         <div className="mb-6">
           <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
@@ -258,6 +298,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          
           <Link
             href="/assessment"
             className="group bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between"
@@ -337,6 +378,7 @@ export default function Home() {
               เข้าสู่ระบบบันทึก <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </Link>
+
         </div>
       </section>
     </main>
