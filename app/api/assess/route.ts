@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateSTDRisk } from '@/lib/risk-calculator';
 import { supabase } from '@/lib/supabase';
