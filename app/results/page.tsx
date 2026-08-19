@@ -9,8 +9,11 @@ import PanicButton from '@/components/panic-button';
 import { 
   ShieldAlert, ArrowRight, MapPin, RefreshCw, 
   FileText, CheckCircle2, X, Printer, SlidersHorizontal, Mail,
-  HeartPulse, Calendar, Pill
+  HeartPulse, Calendar, Clock, Pill
 } from 'lucide-react';
+import { 
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend
+} from 'recharts';
 
 // ฟังก์ชันแปลงวันที่และเวลาแบบไทยทางการ (GMT+7)
 const formatThaiDateTime = (dateObj: Date = new Date()) => {
@@ -94,9 +97,9 @@ export default function ResultsPage() {
   const [userInput, setUserInput] = useState<UserAssessmentInput | null>(null);
   const [showMedicalCard, setShowMedicalCard] = useState(false);
 
-  // State สำหรับ What-If Simulation
-  const [simCondom, setSimCondom] = useState<boolean>(false);
-  const [simPrep, setSimPrep] = useState<boolean>(false);
+  // State สำหรับ What-If Simulation (เปิดค่าเริ่มต้นเป็น True เพื่อให้เห็นการเปรียบเทียบทันที)
+  const [simCondom, setSimCondom] = useState<boolean>(true);
+  const [simPrep, setSimPrep] = useState<boolean>(true);
 
   useEffect(() => {
     const savedResult = localStorage.getItem('latest_assessment_result');
@@ -111,8 +114,6 @@ export default function ResultsPage() {
       const parsedInput = JSON.parse(savedInput);
       setResult(JSON.parse(savedResult));
       setUserInput(parsedInput);
-      setSimCondom(parsedInput.condomUsed === 'ALWAYS');
-      setSimPrep(parsedInput.prepPepStatus === 'DAILY_PREP');
     } catch (e) {
       router.push('/assessment');
     }
@@ -138,6 +139,13 @@ export default function ResultsPage() {
     );
   }
 
+  const chartData = [
+    { name: 'เชื้อ HIV', 'ความเสี่ยงจริง': result.hiv?.score ?? 0, 'เมื่อมีมาตรการป้องกัน': simulatedResult.hiv?.score ?? 0 },
+    { name: 'ซิฟิลิส', 'ความเสี่ยงจริง': result.syphilis?.score ?? 0, 'เมื่อมีมาตรการป้องกัน': simulatedResult.syphilis?.score ?? 0 },
+    { name: 'หนองใน', 'ความเสี่ยงจริง': result.gonorrhea?.score ?? 0, 'เมื่อมีมาตรการป้องกัน': simulatedResult.gonorrhea?.score ?? 0 },
+    { name: 'ตับอักเสบบี', 'ความเสี่ยงจริง': result.hepatitisB?.score ?? 0, 'เมื่อมีมาตรการป้องกัน': simulatedResult.hepatitisB?.score ?? 0 },
+  ];
+
   const hoursSince = userInput.daysSinceExposure * 24;
   const pepHoursRemaining = Math.max(0, 72 - hoursSince);
 
@@ -159,44 +167,7 @@ export default function ResultsPage() {
     }
   };
 
-  const getBarColor = (score: number) => {
-    if (score >= 60) return 'bg-rose-600';
-    if (score >= 30) return 'bg-amber-500';
-    return 'bg-indigo-600';
-  };
-
   const badge = getBadgeStyle(result.overallLevel);
-
-  const diseaseList = [
-    { 
-      name: 'เชื้อไวรัสเอชไอวี (HIV-1 / HIV-2)', 
-      code: 'HIV', 
-      score: result.hiv?.score ?? 0, 
-      simScore: simulatedResult.hiv?.score ?? 0,
-      obj: result.hiv 
-    },
-    { 
-      name: 'โรคซิฟิลิส (Treponema pallidum)', 
-      code: 'Syphilis', 
-      score: result.syphilis?.score ?? 0, 
-      simScore: simulatedResult.syphilis?.score ?? 0,
-      obj: result.syphilis 
-    },
-    { 
-      name: 'หนองในแท้และหนองในเทียม (Gonorrhea / Chlamydia)', 
-      code: 'Gonorrhea', 
-      score: result.gonorrhea?.score ?? 0, 
-      simScore: simulatedResult.gonorrhea?.score ?? 0,
-      obj: result.gonorrhea 
-    },
-    { 
-      name: 'ไวรัสตับอักเสบบี (Hepatitis B - HBsAg)', 
-      code: 'Hepatitis B', 
-      score: result.hepatitisB?.score ?? 0, 
-      simScore: simulatedResult.hepatitisB?.score ?? 0,
-      obj: result.hepatitisB 
-    },
-  ];
 
   const handleEmailSelf = () => {
     const subject = encodeURIComponent('[STD RiskGuard] บันทึกผลสรุปประวัติความเสี่ยงเพื่อยื่นตรวจ');
@@ -220,6 +191,7 @@ export default function ResultsPage() {
       <PanicButton />
 
       <div className="max-w-4xl mx-auto space-y-6">
+        
         {/* Top Actions */}
         <div className="flex items-center justify-between">
           <Link
@@ -267,7 +239,7 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {/* Overall Status Box */}
+        {/* Overall Status & Comparative Chart Box */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
             <div>
@@ -288,58 +260,37 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          {/* Unified Horizontal Risk Bars Section */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          {/* Comparative Bar Chart */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
               <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 คะแนนความเสี่ยงจำแนกรายโรค (Risk Score 0 - 100)
               </h2>
-              <div className="flex items-center gap-4 text-xs font-semibold">
-                <span className="flex items-center gap-1.5 text-slate-700">
-                  <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block" /> ความเสี่ยงจริงของคุณ
-                </span>
-                {(simCondom || simPrep) && (
-                  <span className="flex items-center gap-1.5 text-emerald-600">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" /> เมื่อมีมาตรการป้องกัน
-                  </span>
-                )}
-              </div>
             </div>
 
-            {/* 4 Disease Horizontal Progress Bars */}
-            <div className="space-y-3.5 pt-1">
-              {diseaseList.map((d) => {
-                const isSimulated = simCondom || simPrep;
-                const displayScore = isSimulated ? d.simScore : d.score;
-                return (
-                  <div key={d.code} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-                    <div className="flex justify-between items-center text-xs sm:text-sm font-bold">
-                      <span className="text-slate-800">{d.name}</span>
-                      <div className="flex items-center gap-2">
-                        {isSimulated && d.simScore !== d.score && (
-                          <span className="text-xs text-slate-400 line-through">
-                            {d.score}%
-                          </span>
-                        )}
-                        <span className={`font-black ${isSimulated ? 'text-emerald-600' : 'text-slate-900'}`}>
-                          {displayScore}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden">
-                      <div
-                        className={`${isSimulated ? 'bg-emerald-500' : getBarColor(displayScore)} h-full rounded-full transition-all duration-500`}
-                        style={{ width: `${Math.min(displayScore, 100)}%` }}
-                      />
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 leading-relaxed pt-1">
-                      {getRecText(d.obj)}
-                    </p>
-                  </div>
-                );
-              })}
+            <div className="h-64 w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 15, right: 15, left: -20, bottom: 5 }}>
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 700, fill: '#475569' }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderRadius: '12px',
+                      color: '#fff',
+                      fontSize: '12px',
+                      border: 'none',
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="top" 
+                    align="right"
+                    wrapperStyle={{ paddingBottom: '15px', fontSize: '12px', fontWeight: 600 }} 
+                  />
+                  <Bar dataKey="ความเสี่ยงจริง" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="เมื่อมีมาตรการป้องกัน" fill="#10b981" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
@@ -352,7 +303,7 @@ export default function ResultsPage() {
               </h3>
             </div>
             <p className="text-xs text-indigo-900/80 leading-relaxed">
-              ลองเปิด-ปิดตัวเลือกด้านล่าง เพื่อดูว่าการใช้ถุงยางหรือการทานยา PrEP ส่งผลให้ระดับความเสี่ยงของแต่ละโรคลดลงอย่างไร
+              ลองเปิด-ปิดตัวเลือกด้านล่าง เพื่อดูว่าการใช้ถุงยางหรือการทานยา PrEP ส่งผลให้กราฟแท่งสีเขียวลดลงอย่างไร
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -381,6 +332,49 @@ export default function ResultsPage() {
                 <CheckCircle2 className={`w-4 h-4 ${simPrep ? 'text-white' : 'text-slate-300'}`} />
                 <span>จำลอง: ทาน Daily PrEP สม่ำเสมอ</span>
               </button>
+            </div>
+          </div>
+
+          {/* Detailed Recommendations Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-sm text-slate-900">เชื้อ HIV</span>
+                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-white border text-slate-700">
+                  {result.hiv?.level} ({result.hiv?.score}%)
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">{getRecText(result.hiv)}</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-sm text-slate-900">ซิฟิลิส (Syphilis)</span>
+                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-white border text-slate-700">
+                  {result.syphilis?.level} ({result.syphilis?.score}%)
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">{getRecText(result.syphilis)}</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-sm text-slate-900">หนองใน (Gonorrhea/Chlamydia)</span>
+                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-white border text-slate-700">
+                  {result.gonorrhea?.level} ({result.gonorrhea?.score}%)
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">{getRecText(result.gonorrhea)}</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-sm text-slate-900">ไวรัสตับอักเสบบี (Hepatitis B)</span>
+                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-white border text-slate-700">
+                  {result.hepatitisB?.level} ({result.hepatitisB?.score}%)
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">{getRecText(result.hepatitisB)}</p>
             </div>
           </div>
         </div>
@@ -424,12 +418,11 @@ export default function ResultsPage() {
           </Link>
         </div>
 
-        {/* MODAL: FORMAL BLACK & WHITE CLINICAL HANDOVER FORM */}
+        {/* MODAL: FORMAL CLINICAL HANDOVER FORM */}
         {showMedicalCard && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
             <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-300 my-auto">
               
-              {/* Modal Top Control Bar */}
               <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between print:hidden">
                 <span className="text-xs font-bold tracking-wider">
                   แบบฟอร์มสรุปข้อมูลความเสี่ยง (แบบทางการ)
@@ -461,10 +454,8 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              {/* FORM CONTENT (MONOCHROME FORMAT) */}
               <div className="p-8 sm:p-10 space-y-6 text-black bg-white font-sans" id="medical-print-document">
                 
-                {/* Header เอกสารทางการ */}
                 <div className="text-center border-b-2 border-black pb-4 space-y-1">
                   <h1 className="text-base sm:text-lg font-bold tracking-wide">
                     แบบสรุปข้อมูลประวัติความเสี่ยงเพื่อประกอบการคัดกรองเบื้องต้น
@@ -478,12 +469,10 @@ export default function ResultsPage() {
                   </div>
                 </div>
 
-                {/* ข้อความชี้แจง */}
                 <div className="border border-black p-2.5 text-[11px] leading-relaxed text-gray-800">
                   <strong>หมายเหตุถึงเจ้าหน้าที่:</strong> ผู้รับบริการได้บันทึกข้อมูลประวัติความเสี่ยงส่วนบุคคลผ่านระบบคัดกรองตนเองล่วงหน้า เพื่อความสะดวก รวดเร็ว และลดความกังวลในการสนทนาเรื่องส่วนบุคคล สามารถใช้ข้อมูลด้านล่างนี้ประกอบการพิจารณาส่งตรวจได้ทันที
                 </div>
 
-                {/* ตารางประวัติความเสี่ยง 6 หัวข้อ */}
                 <div className="space-y-1.5">
                   <h2 className="text-xs font-bold">1. ข้อมูลการสัมผัสเชื้อและพฤติกรรมเสี่ยง</h2>
                   <table className="w-full text-xs border border-black border-collapse">
@@ -527,7 +516,6 @@ export default function ResultsPage() {
                   </table>
                 </div>
 
-                {/* ตารางสรุปความเสี่ยง 4 โรค */}
                 <div className="space-y-1.5">
                   <h2 className="text-xs font-bold">2. ผลการวิเคราะห์ระดับความเสี่ยงเบื้องต้น (Risk Stratification)</h2>
                   <table className="w-full text-xs border border-black border-collapse text-left">
@@ -563,7 +551,6 @@ export default function ResultsPage() {
                   </table>
                 </div>
 
-                {/* ท้ายเอกสาร */}
                 <div className="border-t border-black pt-3 flex justify-between text-[10px] text-gray-500">
                   <span>* ข้อมูลนี้ใช้เพื่อประกอบการซักประวัติเท่านั้น ไม่ใช่ผลการตรวจทางห้องปฏิบัติการ</span>
                   <span>STD Risk Screening System</span>
@@ -573,6 +560,7 @@ export default function ResultsPage() {
             </div>
           </div>
         )}
+
       </div>
     </main>
   );
