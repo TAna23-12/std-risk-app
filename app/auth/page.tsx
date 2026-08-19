@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +14,17 @@ export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  // ถ้ามี Session ล็อกอินค้างอยู่แล้ว ให้เด้งกลับหน้าแรกทันที
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/');
+      }
+    };
+    checkUser();
+  }, [router]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +41,9 @@ export default function AuthPage() {
         if (error) throw error;
 
         if (data.session) {
-          // ✅ ปรับให้เด้งกลับหน้าแรกทันทีหลังสมัครเสร็จ
-          router.push('/');
+          router.push('/'); // ✅ สมัครเสร็จ -> ไปหน้าแรก
         } else {
-          setMessage('สร้างบัญชีสำเร็จ! หากระบบเปิดยืนยันอีเมล กรุณาตรวจสอบกล่องข้อความ');
+          setMessage('สร้างบัญชีสำเร็จ! กรุณาตรวจสอบอีเมลเพื่อยืนยันตัวตน');
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -42,8 +52,7 @@ export default function AuthPage() {
         });
 
         if (error) throw error;
-        // ✅ ปรับให้เด้งกลับหน้าแรกทันทีหลังล็อกอินสำเร็จ
-        router.push('/');
+        router.push('/'); // ✅ ล็อกอินเสร็จ -> ไปหน้าแรก
       }
     } catch (err: any) {
       setMessage(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
@@ -137,7 +146,7 @@ export default function AuthPage() {
                 setIsSignUp(!isSignUp);
                 setMessage(null);
               }}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition"
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
             >
               {isSignUp ? 'มีบัญชีแล้ว? คลิกเพื่อเข้าสู่ระบบ' : 'ยังไม่มีบัญชี? คลิกเพื่อสร้างโปรไฟล์ใหม่'}
             </button>
