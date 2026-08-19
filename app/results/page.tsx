@@ -14,6 +14,27 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip
 } from 'recharts';
 
+// ฟังก์ชันแปลงวันที่และเวลาแบบไทยทางการ (GMT+7)
+const formatThaiDateTime = (dateObj: Date = new Date()) => {
+  return dateObj.toLocaleString('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatThaiFullDate = (dateObj: Date = new Date()) => {
+  return dateObj.toLocaleDateString('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
 // แปลงค่าเป็นภาษาไทยทางการ
 const translateExposureType = (type: string) => {
   const map: Record<string, string> = {
@@ -142,7 +163,7 @@ export default function ResultsPage() {
     const subject = encodeURIComponent('[STD RiskGuard] บันทึกผลสรุปประวัติความเสี่ยงเพื่อยื่นตรวจ');
     const body = encodeURIComponent(
       `ผลสรุปการประเมินความเสี่ยงสุขภาพทางเพศ (STD RiskGuard)\n` +
-      `วันที่ประเมิน: ${new Date().toLocaleDateString('th-TH')}\n` +
+      `วันที่และเวลาประเมิน: ${formatThaiDateTime()}\n` +
       `ระดับความเสี่ยงโดยรวม: ${result?.overallLevel}\n` +
       `คะแนน HIV: ${result?.hiv?.score}%\n` +
       `คะแนน ซิฟิลิส: ${result?.syphilis?.score}%\n` +
@@ -235,7 +256,7 @@ export default function ResultsPage() {
             <div className="text-left sm:text-right">
               <span className="text-xs text-slate-400">ประเมินเมื่อ</span>
               <p className="text-xs font-bold text-slate-700">
-                {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {formatThaiDateTime()}
               </p>
             </div>
           </div>
@@ -438,7 +459,7 @@ export default function ResultsPage() {
                     (สำหรับผู้รับบริการยื่นต่อเจ้าหน้าที่คัดกรอง • ข้อมูลไม่ระบุตัวตน)
                   </p>
                   <div className="flex justify-between text-[10px] text-gray-600 pt-2">
-                    <span>วันที่ประเมิน: {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    <span>วันที่ประเมิน: {formatThaiFullDate()} ({formatThaiDateTime()})</span>
                     <span>สถานะ: นิรนาม (Anonymous)</span>
                   </div>
                 </div>
