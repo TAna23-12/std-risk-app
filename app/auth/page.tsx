@@ -30,7 +30,8 @@ export default function AuthPage() {
         if (error) throw error;
 
         if (data.session) {
-          router.push('/tracker');
+          // ✅ ปรับให้เด้งกลับหน้าแรกทันทีหลังสมัครเสร็จ
+          router.push('/');
         } else {
           setMessage('สร้างบัญชีสำเร็จ! หากระบบเปิดยืนยันอีเมล กรุณาตรวจสอบกล่องข้อความ');
         }
@@ -41,7 +42,8 @@ export default function AuthPage() {
         });
 
         if (error) throw error;
-        router.push('/tracker');
+        // ✅ ปรับให้เด้งกลับหน้าแรกทันทีหลังล็อกอินสำเร็จ
+        router.push('/');
       }
     } catch (err: any) {
       setMessage(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
