@@ -5,37 +5,82 @@ import Link from 'next/link';
 import { 
   ShieldCheck, Activity, MapPin, Pill, ArrowRight, 
   Lock, Calendar, CheckCircle2, Sparkles, Shield,
-  TrendingDown, AlertCircle, HeartPulse
+  HeartPulse, Dna, Syringe, TestTube, Cross
 } from 'lucide-react';
 import PanicButton from '@/components/panic-button';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pb-20">
+    <main className="min-h-screen bg-slate-50 text-slate-900 pb-20 overflow-x-hidden">
       <PanicButton />
 
-      {/* Hero Section แบบ Modern Split Layout */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 border-b border-slate-200/80 pt-10 pb-16 px-4 sm:px-6">
+      {/* Hero Section with Floating Medical & Viral Glow Graphics */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-950/[0.04] via-purple-900/[0.02] to-slate-50 border-b border-slate-200/80 pt-12 pb-20 px-4 sm:px-6">
         
-        {/* Background Aura Layers (เห็นสีชัดเจน) */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full -z-10 pointer-events-none overflow-hidden">
-          <div className="absolute -top-24 -left-20 w-[500px] h-[500px] bg-indigo-300/30 rounded-full blur-[90px]" />
-          <div className="absolute top-10 right-0 w-[450px] h-[450px] bg-purple-200/40 rounded-full blur-[100px]" />
+        {/* ================= BACKGROUND GLOW & MEDICAL PARTICLES ================= */}
+        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
+          
+          {/* Ambient Lighting Spheres */}
+          <div className="absolute top-[-80px] left-[15%] w-[480px] h-[480px] bg-gradient-to-tr from-indigo-400/25 to-purple-400/20 rounded-full blur-[100px]" />
+          <div className="absolute top-[20%] right-[10%] w-[450px] h-[450px] bg-gradient-to-bl from-violet-400/25 to-pink-400/15 rounded-full blur-[110px]" />
+          <div className="absolute bottom-0 left-[35%] w-[380px] h-[380px] bg-cyan-300/15 rounded-full blur-[90px]" />
+
+          {/* Subtle Cyber Grid */}
           <div 
-            className="absolute inset-0 opacity-[0.04]" 
+            className="absolute inset-0 opacity-[0.035]" 
             style={{
-              backgroundImage: 'radial-gradient(#4f46e5 1.5px, transparent 1.5px)',
-              backgroundSize: '20px 20px'
+              backgroundImage: 'radial-gradient(#6366f1 1.5px, transparent 1.5px)',
+              backgroundSize: '22px 22px'
             }} 
           />
-        </div>
 
-        <div className="max-w-6xl mx-auto">
+          {/* 🧬 1. เซลล์ไวรัสชีวภาพ / เชื้อจุลชีพ (Virus Capsule Shape) - มุมบนซ้าย */}
+          <div className="absolute top-8 left-6 sm:left-16 animate-float-1">
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-indigo-500/20 to-purple-500/30 border border-indigo-400/40 backdrop-blur-md flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <span className="w-3 h-3 rounded-full bg-indigo-500 animate-ping absolute" />
+              <Activity className="w-8 h-8 sm:w-9 sm:h-9 text-indigo-600/80" />
+              {/* หนามไวรัสรอบวง (Virus Spikes) */}
+              <div className="absolute -top-1.5 w-2 h-2 rounded-full bg-indigo-500/60" />
+              <div className="absolute -bottom-1.5 w-2 h-2 rounded-full bg-purple-500/60" />
+              <div className="absolute -left-1.5 w-2 h-2 rounded-full bg-indigo-500/60" />
+              <div className="absolute -right-1.5 w-2 h-2 rounded-full bg-purple-500/60" />
+            </div>
+          </div>
+
+          {/* 🧬 2. โมเลกุล DNA พันธุกรรม - กลางค่อนขวา */}
+          <div className="absolute top-12 right-8 sm:right-24 animate-float-2">
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-purple-500/15 to-pink-500/15 border border-purple-300/40 backdrop-blur-md shadow-xl shadow-purple-500/20">
+              <Dna className="w-9 h-9 sm:w-12 sm:h-12 text-purple-600/85" />
+            </div>
+          </div>
+
+          {/* 💉 3. หลอดทดลองตรวจเชื้อ (Test Tube Clinical Analyzer) - ด้านล่างซ้าย */}
+          <div className="absolute bottom-8 left-8 sm:left-28 animate-float-3">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-cyan-500/15 border border-cyan-300/50 backdrop-blur-md shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+              <TestTube className="w-7 h-7 sm:w-8 sm:h-8 text-cyan-600" />
+              <span className="text-[10px] font-black tracking-wider text-cyan-700 uppercase bg-cyan-100/80 px-2 py-0.5 rounded-md hidden sm:inline">
+                Lab Screening
+              </span>
+            </div>
+          </div>
+
+          {/* 💊 4. สัญลักษณ์ทางการแพทย์และยาป้องกัน (Medical Shield & Pill) - ด้านล่างขวา */}
+          <div className="absolute bottom-10 right-6 sm:right-16 animate-float-4">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-tr from-emerald-500/15 to-teal-500/20 border border-emerald-300/50 backdrop-blur-md shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+              <Pill className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            </div>
+          </div>
+
+        </div>
+        {/* ================= END BACKGROUND PARTICLES ================= */}
+
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             
-            {/* ฝั่งซ้าย: Headline & Call To Actions (7 คอลัมน์) */}
+            {/* ฝั่งซ้าย: ข้อความหลัก */}
             <div className="lg:col-span-7 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 bg-emerald-100/80 border border-emerald-300 px-3.5 py-1.5 rounded-full text-emerald-900 text-xs font-extrabold shadow-xs">
+              <div className="inline-flex items-center gap-2 bg-emerald-100/90 border border-emerald-300 px-3.5 py-1.5 rounded-full text-emerald-900 text-xs font-extrabold shadow-sm backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
                 <Lock className="w-3.5 h-3.5" />
                 <span>100% Anonymous • ไม่ระบุตัวตน • มาตรฐาน CDC</span>
@@ -43,20 +88,20 @@ export default function Home() {
 
               <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
                 ระบบประเมินความเสี่ยง <br />
-                <span className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   โรคติดต่อทางเพศสัมพันธ์
                 </span>
               </h1>
 
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl font-medium">
-                วิเคราะห์ความเสี่ยงรายโรค (HIV, ซิฟิลิส, หนองใน, ไวรัสตับอักเสบ) ด้วย Clinical Algorithm พร้อมปักหมุดระยะตรวจ Window Period และค้นหาคลินิกตรวจนิรนามใกล้คุณ
+                วิเคราะห์ความเสี่ยงเฉพาะบุคคล (HIV, ซิฟิลิส, หนองใน, ไวรัสตับอักเสบ) ด้วยอัลกอริทึมการแพทย์ พร้อมปักหมุดระยะตรวจ Window Period และค้นหาคลินิกตรวจนิรนามใกล้คุณ
               </p>
 
               {/* ปุ่ม Action */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href="/assessment"
-                  className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-3.5 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-3.5 rounded-2xl font-bold text-sm shadow-xl shadow-indigo-300/60 hover:shadow-indigo-400 transition cursor-pointer"
                 >
                   <span>เริ่มทำแบบประเมินฟรี</span>
                   <ArrowRight className="w-4 h-4" />
@@ -64,21 +109,21 @@ export default function Home() {
 
                 <Link
                   href="/clinics"
-                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-xs transition cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 bg-white/90 hover:bg-white text-slate-700 border border-slate-300 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-sm hover:shadow transition cursor-pointer backdrop-blur-sm"
                 >
                   <MapPin className="w-4 h-4 text-indigo-600" />
                   <span>ค้นหาคลินิกใกล้ฉัน</span>
                 </Link>
               </div>
 
-              {/* Badges การันตี 3 ช่อง */}
-              <div className="pt-6 grid grid-cols-3 gap-2 border-t border-slate-200/80 text-[11px] font-bold text-slate-500">
+              {/* Trust Badges */}
+              <div className="pt-6 grid grid-cols-3 gap-2 border-t border-slate-200/80 text-[11px] font-bold text-slate-600">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                   <span>เกณฑ์การแพทย์ CDC</span>
                 </div>
                 <div className="flex items-center gap-1.5 border-x border-slate-200 px-2">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                   <span>วิเคราะห์เฉพาะบุคคล</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -88,11 +133,10 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ฝั่งขวา: Card จำลองการวิเคราะห์ (5 คอลัมน์ เติมเต็มพื้นที่ว่าง) */}
+            {/* ฝั่งขวา: Card จำลองการวิเคราะห์ */}
             <div className="lg:col-span-5 relative">
-              <div className="bg-white/90 backdrop-blur-md p-6 rounded-3xl border border-indigo-100 shadow-xl shadow-indigo-100/50 space-y-4">
+              <div className="bg-white/95 backdrop-blur-xl p-6 rounded-3xl border border-indigo-200/70 shadow-2xl shadow-indigo-200/50 space-y-4">
                 
-                {/* Header จำลอง */}
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
@@ -108,7 +152,6 @@ export default function Home() {
                   </span>
                 </div>
 
-                {/* Score Bars จำลอง */}
                 <div className="space-y-2.5">
                   <div>
                     <div className="flex justify-between text-[11px] font-bold mb-1">
@@ -141,7 +184,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* กล่องคำแนะนำ Window Period */}
                 <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 flex items-start gap-3">
                   <Calendar className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                   <div className="text-[11px] text-slate-600 leading-snug">
@@ -166,7 +208,6 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1 */}
           <Link
             href="/assessment"
             className="group bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between"
@@ -187,7 +228,6 @@ export default function Home() {
             </span>
           </Link>
 
-          {/* Card 2 */}
           <Link
             href="/timeline"
             className="group bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm hover:border-rose-400 hover:shadow-md transition flex flex-col justify-between"
@@ -208,7 +248,6 @@ export default function Home() {
             </span>
           </Link>
 
-          {/* Card 3 */}
           <Link
             href="/clinics"
             className="group bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm hover:border-blue-400 hover:shadow-md transition flex flex-col justify-between"
@@ -229,7 +268,6 @@ export default function Home() {
             </span>
           </Link>
 
-          {/* Card 4 */}
           <Link
             href="/tracker"
             className="group bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm hover:border-emerald-400 hover:shadow-md transition flex flex-col justify-between"
