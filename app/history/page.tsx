@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import PanicButton from '@/components/panic-button';
 import { 
   History, ArrowLeft, ShieldCheck, Calendar, Activity, 
-  RefreshCw, LogIn, FileText, Printer, Mail, X
+  RefreshCw, LogIn, FileText, Printer, X
 } from 'lucide-react';
 
 interface AssessmentRecord {
@@ -26,7 +26,6 @@ interface AssessmentRecord {
   partner_risk?: string;
 }
 
-// ฟังก์ชันแปลงวันที่และเวลาแบบไทยทางการ
 const formatThaiDate = (dateStr: string) => {
   if (!dateStr) return '-';
   return new Date(dateStr).toLocaleString('th-TH', {
@@ -49,7 +48,6 @@ const formatThaiFullDate = (dateStr: string) => {
   });
 };
 
-// ฟังก์ชันแปลค่าทางการแพทย์
 const translateExposureType = (type: string) => {
   const map: Record<string, string> = {
     ANAL_RECEPTIVE: 'ทางทวารหนัก (ฝ่ายรับ)',
@@ -107,7 +105,6 @@ const translateSymptom = (sym: string) => {
   return map[sym] || sym;
 };
 
-// ฟังก์ชันสร้างคำแนะนำตรวจตามคะแนนความเสี่ยง
 const getClinicalRecommendation = (diseaseName: string, score: number) => {
   if (score >= 60) {
     return `พบแพทย์หรือคลินิกเฉพาะทางเพื่อตรวจ ${diseaseName} ทันที • งดการมีเพศสัมพันธ์จนกว่าจะได้รับการยืนยันผลตรวจ`;
@@ -174,22 +171,6 @@ export default function HistoryPage() {
     if (score >= 60) return 'bg-rose-600';
     if (score >= 30) return 'bg-amber-500';
     return 'bg-indigo-600';
-  };
-
-  const handleEmailRecord = (item: AssessmentRecord) => {
-    const subject = encodeURIComponent(`[STD RiskGuard] บันทึกผลประเมินความเสี่ยง วันที่ ${formatThaiDate(item.created_at)}`);
-    const body = encodeURIComponent(
-      `ผลสรุปการประเมินความเสี่ยงสุขภาพทางเพศ (STD RiskGuard)\n` +
-      `วันที่ประเมิน: ${formatThaiDate(item.created_at)}\n` +
-      `ระดับความเสี่ยงโดยรวม: ${item.overall_level}\n` +
-      `คะแนน HIV: ${item.hiv_score}%\n` +
-      `คะแนน ซิฟิลิส: ${item.syphilis_score}%\n` +
-      `คะแนน หนองใน: ${item.gonorrhea_score}%\n` +
-      `คะแนน ไวรัสตับอักเสบบี: ${item.hepatitis_b_score}%\n` +
-      `ระยะเวลาสัมผัสเชื้อ: ${item.days_since_exposure} วัน\n\n` +
-      `*เอกสารนี้จัดทำขึ้นเพื่อใช้ยื่นต่อบุคลากรทางการแพทย์เพื่อความสะดวกในการคัดกรอง*`
-    );
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
   };
 
   return (
@@ -359,17 +340,9 @@ export default function HistoryPage() {
               {/* Modal Top Control Bar */}
               <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between print:hidden">
                 <span className="text-xs font-bold tracking-wider">
-                  แบบฟอร์มสรุปข้อมูลความเสี่ยง (แบบทางการ)
+                  แบบฟอร์มสรุปข้อมูลความเสี่ยง (ประวัติรอบวันที่ {formatThaiDate(selectedRecord.created_at)})
                 </span>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleEmailRecord(selectedRecord)}
-                    className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm border border-slate-700 cursor-pointer"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>ส่งสำเนาเข้าอีเมล</span>
-                  </button>
                   <button
                     type="button"
                     onClick={() => window.print()}
@@ -401,7 +374,7 @@ export default function HistoryPage() {
                   </p>
                   <div className="flex justify-between text-[10px] text-gray-600 pt-2">
                     <span>วันที่ประเมิน: {formatThaiFullDate(selectedRecord.created_at)} ({formatThaiDate(selectedRecord.created_at)})</span>
-                    <span>สถานะ: นิรนาม (Anonymous)</span>
+                    <span>ผู้รับบริการ: {user?.email || 'นิรนาม (Anonymous)'}</span>
                   </div>
                 </div>
 
@@ -410,7 +383,7 @@ export default function HistoryPage() {
                   <strong>หมายเหตุถึงเจ้าหน้าที่:</strong> ผู้รับบริการได้บันทึกข้อมูลประวัติความเสี่ยงส่วนบุคคลผ่านระบบคัดกรองตนเองล่วงหน้า เพื่อความสะดวก รวดเร็ว และลดความกังวลในการสนทนาเรื่องส่วนบุคคล สามารถใช้ข้อมูลด้านล่างนี้ประกอบการพิจารณาส่งตรวจได้ทันที
                 </div>
 
-                {/* ตารางประวัติความเสี่ยง 6 หัวข้อ (ครบถ้วนเหมือนหน้า Results) */}
+                {/* ตารางประวัติความเสี่ยง 6 หัวข้อ */}
                 <div className="space-y-1.5">
                   <h2 className="text-xs font-bold">1. ข้อมูลการสัมผัสเชื้อและพฤติกรรมเสี่ยง</h2>
                   <table className="w-full text-xs border border-black border-collapse">
@@ -458,7 +431,7 @@ export default function HistoryPage() {
                   </table>
                 </div>
 
-                {/* ตารางสรุปความเสี่ยง 4 โรค (มีระดับความเสี่ยงและคำแนะนำตรวจแบบละเอียด) */}
+                {/* ตารางสรุปความเสี่ยง 4 โรค */}
                 <div className="space-y-1.5">
                   <h2 className="text-xs font-bold">2. ผลการวิเคราะห์ระดับความเสี่ยงเบื้องต้น (Risk Stratification)</h2>
                   <table className="w-full text-xs border border-black border-collapse text-left">

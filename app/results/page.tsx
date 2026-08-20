@@ -6,10 +6,9 @@ import { useRouter } from 'next/navigation';
 import { UserAssessmentInput } from '@/types';
 import { calculateSTDRisk } from '@/lib/risk-calculator';
 import PanicButton from '@/components/panic-button';
-import { supabase } from '@/lib/supabase';
 import { 
   ShieldAlert, ArrowRight, MapPin, RefreshCw, 
-  FileText, CheckCircle2, X, Printer, SlidersHorizontal, Mail,
+  FileText, CheckCircle2, X, Printer, SlidersHorizontal,
   HeartPulse
 } from 'lucide-react';
 import { 
@@ -95,7 +94,6 @@ export default function ResultsPage() {
   const [result, setResult] = useState<any>(null);
   const [userInput, setUserInput] = useState<UserAssessmentInput | null>(null);
   const [showMedicalCard, setShowMedicalCard] = useState(false);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const [simCondom, setSimCondom] = useState<boolean>(true);
   const [simPrep, setSimPrep] = useState<boolean>(true);
@@ -167,59 +165,6 @@ export default function ResultsPage() {
   };
 
   const badge = getBadgeStyle(result.overallLevel);
-
-  // ส่งอีเมลตรงด้วย Resend API
-  const handleSendEmailDirectly = async () => {
-    let emailToSend = '';
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      emailToSend = session?.user?.email || '';
-    } catch {
-      // fallback
-    }
-
-    if (!emailToSend) {
-      const inputMail = prompt('กรุณากรอกอีเมลที่ต้องการรับใบสรุปประวัติ:');
-      if (!inputMail || !inputMail.includes('@')) {
-        if (inputMail !== null) alert('กรุณากรอกอีเมลที่ถูกต้อง');
-        return;
-      }
-      emailToSend = inputMail.trim();
-    }
-
-    setIsSendingEmail(true);
-    try {
-      const response = await fetch('/api/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          toEmail: emailToSend,
-          evaluatedAt: formatThaiDateTime(),
-          recordData: {
-            days_since_exposure: userInput.daysSinceExposure,
-            overall_level: result.overallLevel,
-            hiv_score: result.hiv?.score ?? 0,
-            syphilis_score: result.syphilis?.score ?? 0,
-            gonorrhea_score: result.gonorrhea?.score ?? 0,
-            hepatitis_b_score: result.hepatitisB?.score ?? 0,
-            symptoms: userInput.symptoms.map(translateSymptom),
-          },
-        }),
-      });
-
-      const resData = await response.json();
-      if (response.ok && resData.success) {
-        alert(`✅ ส่งใบสรุปประวัติเข้าอีเมล ${emailToSend} เรียบร้อยแล้ว!`);
-      } else {
-        alert('ส่งอีเมลไม่สำเร็จ: ' + (resData.error || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์'));
-      }
-    } catch (err: any) {
-      alert('ไม่สามารถส่งคำขอไปยังเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
-    } finally {
-      setIsSendingEmail(false);
-    }
-  };
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4 pb-24">
@@ -463,15 +408,6 @@ export default function ResultsPage() {
                   แบบฟอร์มสรุปข้อมูลความเสี่ยง (แบบทางการ)
                 </span>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={isSendingEmail}
-                    onClick={handleSendEmailDirectly}
-                    className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm border border-slate-700 cursor-pointer disabled:opacity-50"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>{isSendingEmail ? 'กำลังส่งเมล...' : 'ส่งสำเนาเข้าอีเมล'}</span>
-                  </button>
                   <button
                     type="button"
                     onClick={() => window.print()}
