@@ -170,16 +170,22 @@ export default function ResultsPage() {
 
   // ส่งอีเมลตรงด้วย Resend API
   const handleSendEmailDirectly = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    let emailToSend = session?.user?.email;
+    let emailToSend = '';
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      emailToSend = session?.user?.email || '';
+    } catch {
+      // fallback
+    }
 
     if (!emailToSend) {
-      const inputMail = prompt('กรุณากรอกอีเมลของคุณเพื่อรับใบสรุปประวัติ:');
+      const inputMail = prompt('กรุณากรอกอีเมลที่ต้องการรับใบสรุปประวัติ:');
       if (!inputMail || !inputMail.includes('@')) {
-        alert('กรุณากรอกอีเมลที่ถูกต้อง');
+        if (inputMail !== null) alert('กรุณากรอกอีเมลที่ถูกต้อง');
         return;
       }
-      emailToSend = inputMail;
+      emailToSend = inputMail.trim();
     }
 
     setIsSendingEmail(true);
@@ -204,12 +210,12 @@ export default function ResultsPage() {
 
       const resData = await response.json();
       if (response.ok && resData.success) {
-        alert(`✅ ส่งใบสรุปประวัติทางการแพทย์เข้าอีเมล ${emailToSend} สำเร็จแล้ว!`);
+        alert(`✅ ส่งใบสรุปประวัติเข้าอีเมล ${emailToSend} เรียบร้อยแล้ว!`);
       } else {
-        alert('ส่งอีเมลไม่สำเร็จ: ' + (resData.error || 'เกิดข้อผิดพลาด'));
+        alert('ส่งอีเมลไม่สำเร็จ: ' + (resData.error || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์'));
       }
     } catch (err: any) {
-      alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ส่งอีเมลได้');
+      alert('ไม่สามารถส่งคำขอไปยังเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setIsSendingEmail(false);
     }
