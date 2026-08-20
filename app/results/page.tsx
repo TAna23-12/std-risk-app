@@ -6,16 +6,16 @@ import { useRouter } from 'next/navigation';
 import { UserAssessmentInput } from '@/types';
 import { calculateSTDRisk } from '@/lib/risk-calculator';
 import PanicButton from '@/components/panic-button';
+import { supabase } from '@/lib/supabase';
 import { 
   ShieldAlert, ArrowRight, MapPin, RefreshCw, 
   FileText, CheckCircle2, X, Printer, SlidersHorizontal, Mail,
-  HeartPulse, Calendar, Clock, Pill
+  HeartPulse
 } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend
 } from 'recharts';
 
-// ฟังก์ชันแปลงวันที่และเวลาแบบไทยทางการ (GMT+7)
 const formatThaiDateTime = (dateObj: Date = new Date()) => {
   return dateObj.toLocaleString('th-TH', {
     timeZone: 'Asia/Bangkok',
@@ -36,7 +36,6 @@ const formatThaiFullDate = (dateObj: Date = new Date()) => {
   });
 };
 
-// แปลงค่าเป็นภาษาไทยทางการ
 const translateExposureType = (type: string) => {
   const map: Record<string, string> = {
     ANAL_RECEPTIVE: 'ทางทวารหนัก (ฝ่ายรับ)',
@@ -96,8 +95,8 @@ export default function ResultsPage() {
   const [result, setResult] = useState<any>(null);
   const [userInput, setUserInput] = useState<UserAssessmentInput | null>(null);
   const [showMedicalCard, setShowMedicalCard] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
-  // State สำหรับ What-If Simulation (เปิดค่าเริ่มต้นเป็น True เพื่อให้เห็นการเปรียบเทียบทันที)
   const [simCondom, setSimCondom] = useState<boolean>(true);
   const [simPrep, setSimPrep] = useState<boolean>(true);
 
@@ -169,21 +168,51 @@ export default function ResultsPage() {
 
   const badge = getBadgeStyle(result.overallLevel);
 
-  const handleEmailSelf = () => {
-    const subject = encodeURIComponent('[STD RiskGuard] บันทึกผลสรุปประวัติความเสี่ยงเพื่อยื่นตรวจ');
-    const body = encodeURIComponent(
-      `ผลสรุปการประเมินความเสี่ยงสุขภาพทางเพศ (STD RiskGuard)\n` +
-      `วันที่และเวลาประเมิน: ${formatThaiDateTime()}\n` +
-      `ระดับความเสี่ยงโดยรวม: ${result?.overallLevel}\n` +
-      `คะแนน HIV: ${result?.hiv?.score}%\n` +
-      `คะแนน ซิฟิลิส: ${result?.syphilis?.score}%\n` +
-      `คะแนน หนองใน: ${result?.gonorrhea?.score}%\n` +
-      `คะแนน ไวรัสตับอักเสบบี: ${result?.hepatitisB?.score}%\n` +
-      `การใช้ถุงยาง: ${translateCondom(userInput.condomUsed)}\n` +
-      `ระยะเวลาสัมผัสเชื้อ: ${userInput.daysSinceExposure} วัน\n\n` +
-      `*เอกสารนี้จัดทำขึ้นเพื่อใช้ยื่นต่อบุคลากรทางการแพทย์เพื่อความสะดวกในการคัดกรอง*`
-    );
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+  // ส่งอีเมลตรงด้วย Resend API
+  const handleSendEmailDirectly = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    let emailToSend = session?.user?.email;
+
+    if (!emailToSend) {
+      const inputMail = prompt('กรุณากรอกอีเมลของคุณเพื่อรับใบสรุปประวัติ:');
+      if (!inputMail || !inputMail.includes('@')) {
+        alert('กรุณากรอกอีเมลที่ถูกต้อง');
+        return;
+      }
+      emailToSend = inputMail;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const response = await fetch('/api/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toEmail: emailToSend,
+          evaluatedAt: formatThaiDateTime(),
+          recordData: {
+            days_since_exposure: userInput.daysSinceExposure,
+            overall_level: result.overallLevel,
+            hiv_score: result.hiv?.score ?? 0,
+            syphilis_score: result.syphilis?.score ?? 0,
+            gonorrhea_score: result.gonorrhea?.score ?? 0,
+            hepatitis_b_score: result.hepatitisB?.score ?? 0,
+            symptoms: userInput.symptoms.map(translateSymptom),
+          },
+        }),
+      });
+
+      const resData = await response.json();
+      if (response.ok && resData.success) {
+        alert(`✅ ส่งใบสรุปประวัติทางการแพทย์เข้าอีเมล ${emailToSend} สำเร็จแล้ว!`);
+      } else {
+        alert('ส่งอีเมลไม่สำเร็จ: ' + (resData.error || 'เกิดข้อผิดพลาด'));
+      }
+    } catch (err: any) {
+      alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ส่งอีเมลได้');
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   return (
@@ -430,11 +459,12 @@ export default function ResultsPage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={handleEmailSelf}
-                    className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm border border-slate-700 cursor-pointer"
+                    disabled={isSendingEmail}
+                    onClick={handleSendEmailDirectly}
+                    className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm border border-slate-700 cursor-pointer disabled:opacity-50"
                   >
                     <Mail className="w-3.5 h-3.5" />
-                    <span>ส่งสำเนาเข้าอีเมล</span>
+                    <span>{isSendingEmail ? 'กำลังส่งเมล...' : 'ส่งสำเนาเข้าอีเมล'}</span>
                   </button>
                   <button
                     type="button"
