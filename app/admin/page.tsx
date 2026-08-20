@@ -2,17 +2,21 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import PanicButton from '@/components/panic-button';
 import { 
   Users, ShieldAlert, Activity, Pill, Download, 
   ArrowLeft, RefreshCw, BarChart3, PieChart as PieIcon, 
-  AlertTriangle, FileSpreadsheet, CheckCircle2
+  AlertTriangle, FileSpreadsheet, CheckCircle2, ShieldCheck, Loader2, Lock
 } from 'lucide-react';
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, 
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend 
 } from 'recharts';
+
+// กำหนดอีเมลที่มีสิทธิ์เข้าถึงแดชบอร์ดผู้ดูแลระบบ
+const ADMIN_EMAILS = ['uthaichuangchu@gmail.com'];
 
 interface AssessmentStat {
   log_id: string;
@@ -41,9 +45,52 @@ const RISK_COLORS: Record<string, string> = {
 };
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [currentAdminEmail, setCurrentAdminEmail] = useState<string>('');
+
   const [assessments, setAssessments] = useState<AssessmentStat[]>([]);
   const [medLogs, setMedLogs] = useState<MedicationStat[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 1. ตรวจสอบสิทธิ์การเข้าถึงของผู้ดูแลระบบ (Admin Access Control Guard)
+  useEffect(() => {
+    const checkAdminPermission = async () => {
+      setAuthChecking(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // หากยังไม่ได้ล็อกอิน ให้ Re-route ไปหน้าเข้าสู่ระบบ
+        if (!session?.user) {
+          alert('⛔ กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบ');
+          router.replace('/auth?redirect=/admin');
+          return;
+        }
+
+        const userEmail = session.user.email || '';
+        
+        // หากอีเมลไม่อยู่ในรายชื่อผู้ดูแลระบบ ให้ปฏิเสธการเข้าถึงและดีดกลับหน้าหลัก
+        if (!ADMIN_EMAILS.includes(userEmail)) {
+          alert('⛔ คุณไม่มีสิทธิ์เข้าถึงส่วนผู้ดูแลระบบ (Unauthorized 403 Forbidden)');
+          router.replace('/');
+          return;
+        }
+
+        // ผ่านการตรวจสอบสิทธิ์
+        setCurrentAdminEmail(userEmail);
+        setIsAdmin(true);
+        fetchData();
+      } catch (err) {
+        console.error('Auth verification error:', err);
+        router.replace('/');
+      } finally {
+        setAuthChecking(false);
+      }
+    };
+
+    checkAdminPermission();
+  }, [router]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -62,18 +109,14 @@ export default function AdminDashboardPage() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  // 1. คำนวณ KPI Metrics
+  // 2. คำนวณ KPI Metrics
   const totalAssessments = assessments.length;
   const emergencyPepCases = assessments.filter((a) => a.is_emergency_pep).length;
   const totalMedTrackers = medLogs.length;
   const takenMeds = medLogs.filter((m) => m.status === 'TAKEN').length;
   const avgAdherence = totalMedTrackers > 0 ? Math.round((takenMeds / totalMedTrackers) * 100) : 0;
 
-  // 2. ข้อมูลสัดส่วนระดับความเสี่ยง (Risk Distribution)
+  // 3. ข้อมูลสัดส่วนระดับความเสี่ยง (Risk Distribution)
   const riskCounts = assessments.reduce((acc, curr) => {
     const level = curr.overall_level || 'LOW';
     acc[level] = (acc[level] || 0) + 1;
@@ -87,7 +130,7 @@ export default function AdminDashboardPage() {
     { name: 'LOW (ต่ำ)', value: riskCounts['LOW'] || 0, color: RISK_COLORS.LOW },
   ].filter((item) => item.value > 0);
 
-  // 3. ข้อมูลพฤติกรรมการใช้ถุงยาง
+  // 4. ข้อมูลพฤติกรรมการใช้ถุงยาง
   const condomCounts = assessments.reduce((acc, curr) => {
     const key = curr.condom_used || 'NONE';
     acc[key] = (acc[key] || 0) + 1;
@@ -131,11 +174,46 @@ export default function AdminDashboardPage() {
     document.body.removeChild(link);
   };
 
+  // แสดงผลหน้า Loading ขณะตรวจเช็กสิทธิ์
+  if (authChecking) {
+    return (
+      <main className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 text-white space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+        <div className="text-center space-y-1">
+          <p className="font-bold text-sm">กำลังตรวจสอบสิทธิ์การเข้าถึงผู้ดูแลระบบ...</p>
+          <p className="text-xs text-slate-400">Verifying Role-Based Access Control Credentials</p>
+        </div>
+      </main>
+    );
+  }
+
+  // หากไม่มีสิทธิ์ ให้ระงับการเรนเดอร์เนื้อหา
+  if (!isAdmin) return null;
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4 pb-24">
       <PanicButton />
 
       <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Admin Navigation Bar */}
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>กลับหน้าแรก</span>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Admin: {currentAdminEmail}</span>
+            </span>
+          </div>
+        </div>
+
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -157,7 +235,7 @@ export default function AdminDashboardPage() {
               onClick={fetchData}
               className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>รีเฟรชข้อมูล</span>
             </button>
             <button
